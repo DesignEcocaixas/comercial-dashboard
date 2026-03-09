@@ -348,7 +348,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         </div>
                         
                         <div class="col-auto">
-                            <select name="vendedor_id" class="form-select form-select-sm border-secondary-subtle" style="width: 100px;" required>
+                            <select name="vendedor_id" class="form-select form-select-sm border-secondary-subtle" style="width: 120px;" required>
                                 <option value="todos">Todos os Vendedores</option>
                                 ${usuarios.filter(u => u.tipo === 'vendedor').map(u => `<option value="${u.id}">${u.nome}</option>`).join('')}
                             </select>
