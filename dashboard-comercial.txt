@@ -1,0 +1,26 @@
+Vamos desenvolver um sistema de auto-avaliação. Inicie criando o db do zero e depois vamos prosseguindo com as rotas e views.
+
+O sistema deve ter um botão que abre um modal para criar uma proposta com os seguintes campos: Cliente, data de inicio, data de fim, caixa de texto para observação e um botão que permite lançar modificação e a data de cada modificação em formato de card dentro mesmo do modal da proposta. Permita criar, editar e deletar os cards das propostas. Aguarde o número de modificações de acordo com o que for sendo criado para futuramente usarmos.
+
+Barra de pesquisa no header onde será possível pesquisar as propostas por cliente, intervalo de datas.
+
+Insira também modais de sucesso e de confirmação para as respectivas ações.
+
+
+Tecnologia utilizada:
+nodejs
+mysql
+bootstrap (responsivo) (link nos cabeçalhos)
+views renderizadas a partir de arquivos js, ex: loginView.js.
+
+Exemplo de view: function loginView (){
+	código da view aqui...
+}
+
+Estrutura de pastas
+public/
+	js(caso precise)
+views/
+	views aqui separadas aqui...
+app.js
+db.js

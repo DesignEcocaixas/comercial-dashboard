@@ -1,0 +1,67 @@
+CREATE DATABASE IF NOT EXISTS app_metas;
+USE app_metas;
+
+CREATE TABLE usuarios (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100),
+    token VARCHAR(50) UNIQUE,
+    foto VARCHAR(255),
+    tipo ENUM('admin', 'vendedor'),
+    setor ENUM('admin', 'ecommerce', 'industria'),
+    pontuacao INT DEFAULT 0
+);
+
+-- Tabela para armazenar as metas lançadas pelo Admin
+CREATE TABLE metas (
+    setor ENUM('ecommerce', 'industria') PRIMARY KEY,
+    meta_geral DECIMAL(10,2) DEFAULT 0,
+    qtd_prosp_sem_visita INT DEFAULT 0,
+    qtd_prosp_com_visita INT DEFAULT 0,
+    qtd_clientes_fechar INT DEFAULT 0,
+    qtd_cliente_grande INT DEFAULT 0,
+    valor_cliente_grande DECIMAL(10,2) DEFAULT 0,
+    qtd_pos_venda INT DEFAULT 0,
+    qtd_visitas_carteira INT DEFAULT 0,
+    qtd_reativacoes INT DEFAULT 0,
+    qtd_vendas_outras_regioes INT DEFAULT 0, -- Apenas E-commerce
+    taxa_retencao DECIMAL(5,2) DEFAULT 0 -- Apenas Indústria (%)
+);
+
+INSERT INTO metas (setor) VALUES ('ecommerce'), ('industria');
+
+-- Insira um admin padrão para você conseguir acessar a primeira vez
+INSERT INTO usuarios (nome, token, tipo, setor) VALUES ('Administrador', 'admin123', 'admin', 'admin');
+
+CREATE TABLE clientes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    vendedor_id INT,
+    nome VARCHAR(100),
+    prospeccao ENUM('com_visita', 'sem_visita'),
+    fechou ENUM('sim', 'nao'),
+    valor_venda DECIMAL(10,2) DEFAULT 0,
+    carteira ENUM('sim', 'nao'),
+    parado ENUM('sim', 'nao'),
+    regiao VARCHAR(100),
+    pos_venda ENUM('sim', 'nao', 'pendente') DEFAULT 'pendente',
+    visitado ENUM('sim', 'nao', 'pendente') DEFAULT 'pendente',
+    FOREIGN KEY (vendedor_id) REFERENCES usuarios(id)
+);
+
+CREATE TABLE meta_global (
+    id INT PRIMARY KEY,
+    valor DECIMAL(15,2) DEFAULT 0
+);
+INSERT INTO meta_global (id, valor) VALUES (1, 0);
+
+ALTER TABLE clientes ADD COLUMN comprou_recorrente ENUM('sim', 'nao') DEFAULT 'nao';
+
+ALTER TABLE clientes ADD COLUMN observacao TEXT;
+
+ALTER TABLE clientes 
+ADD COLUMN data_prospeccao DATE NULL, 
+ADD COLUMN data_fechamento DATE NULL;
+
+ALTER TABLE clientes ADD COLUMN arquivado INT DEFAULT 0;
+
+
+
