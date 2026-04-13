@@ -947,7 +947,7 @@ app.post('/vendedor/arquivados/excluir', checarAuth, async (req, res) => {
 // ==========================================
 // START SERVER
 // ==========================================
-app.listen(3000, () => {
-  console.log('🚀 App rodando em http://localhost:3000');
+app.listen(3002, () => {
+  console.log('🚀 App rodando em http://localhost:3002');
   console.log('Utilize o token "admin123" para fazer o primeiro login.');
 });
