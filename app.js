@@ -296,6 +296,23 @@ app.post('/vendedor/recorrencia', checarAuth, async (req, res) => {
 
 
 // ==========================================
+// ROTA: AJUSTE MANUAL DE FATURAMENTO DO VENDEDOR
+// ==========================================
+app.post('/admin/faturamento-manual', checarAuth, async (req, res) => {
+    if (req.session.usuario.tipo !== 'admin') return res.redirect('/vendedor');
+    
+    const { vendedor_id, faturamento_manual } = req.body;
+    
+    await db.query(
+        'UPDATE usuarios SET faturamento_manual = ? WHERE id = ?', 
+        [faturamento_manual || 0, vendedor_id]
+    );
+    
+    // Se você tiver uma função recalcularTodasAsPontuacoes(), pode chamá-la aqui se desejar que o valor afete pontuação futuramente.
+    res.redirect('/admin');
+});
+
+// ==========================================
 // ROTAS DOS VENDEDORES (Atualizadas)
 // ==========================================
 
@@ -659,20 +676,22 @@ app.post('/admin/metas', checarAuth, async (req, res) => {
 // ROTA DO VENDEDOR
 // ==========================================
 app.get('/vendedor', checarAuth, async (req, res) => {
-  if (req.session.usuario.tipo !== 'vendedor') return res.redirect('/admin');
+    if (req.session.usuario.tipo !== 'vendedor') return res.redirect('/admin');
 
-  const usuario = req.session.usuario;
-  const [clientes] = await db.query('SELECT * FROM clientes WHERE vendedor_id = ? AND arquivado = 0 ORDER BY id DESC', [usuario.id]);
-  const [metas] = await db.query('SELECT * FROM metas WHERE setor = ?', [usuario.setor]);
+    const usuario = req.session.usuario;
+    const [clientes] = await db.query('SELECT * FROM clientes WHERE vendedor_id = ? AND arquivado = 0 ORDER BY id DESC', [usuario.id]);
+    const [metas] = await db.query('SELECT * FROM metas WHERE setor = ?', [usuario.setor]);
 
-  const [metaGlobalDb] = await db.query('SELECT valor FROM meta_global WHERE id = 1');
-  const [totalVendasDb] = await db.query('SELECT SUM(valor_venda) as total FROM clientes WHERE fechou = "sim" AND arquivado = 0');
-  const metaGlobal = metaGlobalDb[0]?.valor || 0;
-  const alcancadoGlobal = totalVendasDb[0]?.total || 0;
+    const [metaGlobalDb] = await db.query('SELECT * FROM meta_global WHERE id = 1'); // Atualizado para *
+    const [totalVendasDb] = await db.query('SELECT SUM(valor_venda) as total FROM clientes WHERE fechou = "sim" AND arquivado = 0');
+    const metaGlobal = metaGlobalDb[0]?.valor || 0;
+    
+    // Trocamos const por let para podermos somar os valores manuais abaixo
+    let alcancadoGlobal = Number(totalVendasDb[0]?.total || 0);
 
-  const valorClienteGrande = usuario.setor === 'ecommerce' ? 5000 : 15000;
+    const valorClienteGrande = usuario.setor === 'ecommerce' ? 5000 : 15000;
 
-  const [kpis] = await db.query(`
+    const [kpis] = await db.query(`
         SELECT 
             SUM(IF(prospeccao = 'sem_visita', 1, 0)) AS prosp_sem_visita,
             SUM(IF(prospeccao = 'com_visita', 1, 0)) AS prosp_com_visita,
@@ -688,15 +707,27 @@ app.get('/vendedor', checarAuth, async (req, res) => {
         WHERE vendedor_id = ? AND arquivado = 0
     `, [valorClienteGrande, usuario.id]);
 
-  const [userAtualizado] = await db.query('SELECT * FROM usuarios WHERE id = ?', [usuario.id]);
-  req.session.usuario = userAtualizado[0];
+    const [userAtualizado] = await db.query('SELECT * FROM usuarios WHERE id = ?', [usuario.id]);
+    req.session.usuario = userAtualizado[0];
 
-  const [usuarios] = await db.query('SELECT * FROM usuarios WHERE tipo = "vendedor" ORDER BY pontuacao DESC');
-  const [todosClientes] = await db.query('SELECT vendedor_id, valor_venda, fechou FROM clientes WHERE fechou = "sim" AND arquivado = 0');
+    const [usuarios] = await db.query('SELECT * FROM usuarios WHERE tipo = "vendedor" ORDER BY pontuacao DESC');
+    const [todosClientes] = await db.query('SELECT vendedor_id, valor_venda, fechou FROM clientes WHERE fechou = "sim" AND arquivado = 0');
 
-  res.send(vendedorView(req.session.usuario, clientes, metas[0] || {}, kpis[0] || {}, metaGlobal, alcancadoGlobal, usuarios, todosClientes));
+    // ==========================================
+    // INTEGRAÇÃO DO FATURAMENTO MANUAL
+    // ==========================================
+    
+    // 1. Soma o faturamento manual de toda a equipe para compor a Meta Global
+    const somaManualTotal = usuarios.reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
+    alcancadoGlobal += somaManualTotal;
+
+    // 2. Soma o faturamento manual do próprio vendedor na sua Meta Individual de faturamento
+    if (kpis[0]) {
+        kpis[0].valor_total_vendas = Number(kpis[0].valor_total_vendas || 0) + Number(req.session.usuario.faturamento_manual || 0);
+    }
+
+    res.send(vendedorView(req.session.usuario, clientes, metas[0] || {}, kpis[0] || {}, metaGlobal, alcancadoGlobal, usuarios, todosClientes));
 });
-
 
 // ==========================================
 // ROTA: EXPORTAR PLANILHA EXCEL FORMATADA (.XLSX)

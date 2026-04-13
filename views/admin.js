@@ -26,7 +26,6 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
         textoAlcancado = formatarBRL(numAlcancado);
         textoMeta = formatarBRL(numMeta);
     } else if (formatarPercentual) {
-        // CORREÇÃO: Formata com uma casa decimal e adiciona o símbolo %
         textoAlcancado = numAlcancado.toFixed(1) + '%';
         textoMeta = numMeta.toFixed(0) + '%';
     }
@@ -88,10 +87,20 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
     const ecoClientes = todosClientes.filter(c => c.setor === 'ecommerce');
     const indClientes = todosClientes.filter(c => c.setor === 'industria');
+    
     // Cálculo para o KPI da Indústria
     const totalCarteiraInd = kpis.industria.total_carteira || 0;
     const fidelizadosInd = kpis.industria.total_fidelizados || 0;
     const taxaAlcancadaInd = totalCarteiraInd > 0 ? (fidelizadosInd / totalCarteiraInd) * 100 : 0;
+
+    // INTEGRAÇÃO DO FATURAMENTO MANUAL NOS KPIS E METAS
+    const somaManualTotal = usuarios.reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
+    
+    const somaManualEco = usuarios.filter(u => u.setor === 'ecommerce').reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
+    const metaEcoReal = Number(kpis.ecommerce.valor_total_vendas || 0) + somaManualEco;
+    
+    const somaManualInd = usuarios.filter(u => u.setor === 'industria').reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
+    const metaIndReal = Number(kpis.industria.valor_total_vendas || 0) + somaManualInd;
 
     return layout(`
 
@@ -114,14 +123,9 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <button class="btn btn-sm btn-outline-info py-1 px-2 text-dark" style="font-size: 0.72rem;" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-users-gear me-1"></i> Equipe</button>
                     <div class="vr mx-1"></div>
                     <a href="/admin/arquivados" class="btn btn-sm btn-outline-secondary py-1 px-2 fw-bold" style="font-size: 0.72rem;" title="Ver Histórico Arquivado"><i class="fa-solid fa-box-archive me-1"></i> Arquivados</a>
-                    <button 
-  class="btn btn-sm py-1 px-2 fw-bold text-white border-0" 
-  style="font-size: 0.72rem; background-color: #343a40;" 
-  data-bs-toggle="modal" 
-  data-bs-target="#modalZerarCiclo"
->
-  <i class="fa-solid fa-circle-check me-1"></i> Fechar meta
-</button>
+                    <button class="btn btn-sm py-1 px-2 fw-bold text-white border-0" style="font-size: 0.72rem; background-color: #343a40;" data-bs-toggle="modal" data-bs-target="#modalZerarCiclo">
+                        <i class="fa-solid fa-circle-check me-1"></i> Fechar meta
+                    </button>
                     <a href="/admin/exportar" class="btn btn-sm btn-success py-1 px-3 fw-bold shadow-sm" style="font-size: 0.72rem;" title="Relatório"><i class="fa-solid fa-file-excel me-1"></i>Relatório</a>
                     <a href="/logout" class="btn btn-sm btn-danger py-1 px-2" style="font-size: 0.72rem;" title="Sair"><i class="fa-solid fa-arrow-right-from-bracket"></i></a>
                 </div>
@@ -130,12 +134,11 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         <div class="row mb-4 align-items-stretch">
             
             ${(() => {
-                const vAlcancado = Number(alcancadoGlobal) || 0;
+                const vAlcancado = (Number(alcancadoGlobal) || 0) + somaManualTotal;
                 const vMeta = Number(metaGlobal) || 0;
                 const corGlobal = (vAlcancado >= vMeta && vMeta > 0) ? 'success' : 'primary';
                 const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
                 
-                // Descobre o mês atual e deixa a primeira letra maiúscula
                 const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
                 const mesNome = mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1);
 
@@ -218,22 +221,19 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             </thead>
                             <tbody>
                                 ${(() => {
-                                    // Filtra os usuários que são vendedores
                                     const vendedores = usuarios.filter(u => u.tipo === 'vendedor');
                                     
-                                    // Mapeia e calcula o total vendido (fechou = 'sim') de cada vendedor
                                     const rankingFaturamento = vendedores.map(v => {
                                         const vendasDoVendedor = todosClientes.filter(c => c.vendedor_id === v.id && c.fechou === 'sim');
-                                        const totalVendido = vendasDoVendedor.reduce((acc, curr) => acc + Number(curr.valor_venda), 0);
+                                        const totalVendido = vendasDoVendedor.reduce((acc, curr) => acc + Number(curr.valor_venda), 0) + Number(v.faturamento_manual || 0);
                                         return { ...v, totalVendido };
                                     });
 
-                                    // Ordena do maior para o menor faturamento
                                     rankingFaturamento.sort((a, b) => b.totalVendido - a.totalVendido);
 
-                                    // Renderiza as linhas
+                                    // Lógica de cursor pointer e modal
                                     return rankingFaturamento.map((u, index) => `
-                                        <tr>
+                                        <tr class="${u.id === usuarioLogado.id ? 'bg-light' : ''}" style="cursor: pointer; transition: 0.2s;" onmouseover="this.classList.add('bg-light')" onmouseout="this.classList.remove('bg-light')" data-bs-toggle="modal" data-bs-target="#modalFaturamentoManual${u.id}" title="Ajustar Faturamento Manualmente">
                                             <td class="ps-3 py-2">
                                                 <div class="d-flex align-items-center">
                                                     <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
@@ -241,7 +241,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                 </div>
                                             </td>
                                             <td class="text-end pe-3 py-2">
-                                                <strong class="text-success" style="font-size: 0.9rem;">${formatarBRL(u.totalVendido)}</strong>
+                                                <strong class="text-success" style="font-size: 0.9rem;">${formatarBRL(u.totalVendido)} <i class="fa-solid fa-pen-to-square text-muted ms-1" style="font-size: 0.75rem;"></i></strong>
                                             </td>
                                         </tr>
                                     `).join('');
@@ -264,7 +264,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     ${kpiCard('Prosp. Com Visita', kpis.ecommerce.prosp_com_visita, metas.ecommerce.qtd_prosp_com_visita, 'fa-handshake', false, 'modalEco_com_visita')}
                     ${kpiCard('Clientes p/ Fechar', kpis.ecommerce.clientes_fechar, metas.ecommerce.qtd_clientes_fechar, 'fa-clock', false, 'modalEco_fechar')}
                     ${kpiCard('QTD Cliente Grande', kpis.ecommerce.qtd_cliente_grande, metas.ecommerce.qtd_cliente_grande, 'fa-gem', false, 'modalEco_grande')}
-                    ${kpiCard('Meta E-commerce', kpis.ecommerce.valor_total_vendas, metas.ecommerce.meta_geral, 'fa-sack-dollar', true, 'modalEco_vendas')}
+                    ${kpiCard('Meta E-commerce', metaEcoReal, metas.ecommerce.meta_geral, 'fa-sack-dollar', true, 'modalEco_vendas')}
                     ${kpiCard('Pós-Venda Feito', kpis.ecommerce.pos_venda, metas.ecommerce.qtd_pos_venda, 'fa-headset', false, 'modalEco_pos_venda')}
                     ${kpiCard('Visitas Carteira', kpis.ecommerce.visitas_carteira, metas.ecommerce.qtd_visitas_carteira, 'fa-car', false, 'modalEco_visita')}
                     ${kpiCard('Reativações', kpis.ecommerce.reativacoes, metas.ecommerce.qtd_reativacoes, 'fa-rotate-right', false, 'modalEco_reativacao')}
@@ -282,7 +282,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     ${kpiCard('Prosp. Com Visita', kpis.industria.prosp_com_visita, metas.industria.qtd_prosp_com_visita, 'fa-handshake', false, 'modalInd_com_visita')}
                     ${kpiCard('Clientes p/ Fechar', kpis.industria.clientes_fechar, metas.industria.qtd_clientes_fechar, 'fa-clock', false, 'modalInd_fechar')}
                     ${kpiCard('QTD Cliente Grande', kpis.industria.qtd_cliente_grande, metas.industria.qtd_cliente_grande, 'fa-gem', false, 'modalInd_grande')}
-                    ${kpiCard('Meta Indústria', kpis.industria.valor_total_vendas, metas.industria.meta_geral, 'fa-sack-dollar', true, 'modalInd_vendas')}
+                    ${kpiCard('Meta Indústria', metaIndReal, metas.industria.meta_geral, 'fa-sack-dollar', true, 'modalInd_vendas')}
                     ${kpiCard('Pós-Venda Feito', kpis.industria.pos_venda, metas.industria.qtd_pos_venda, 'fa-headset', false, 'modalInd_pos_venda')}
                     ${kpiCard('Visitas Carteira', kpis.industria.visitas_carteira, metas.industria.qtd_visitas_carteira, 'fa-car', false, 'modalInd_visita')}
                     ${kpiCard('Reativações', kpis.industria.reativacoes, metas.industria.qtd_reativacoes, 'fa-rotate-right', false, 'modalInd_reativacao')}
@@ -294,40 +294,12 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     </div>
 
         <style>
-    .container-70 {
-        width: 85vw;
-        max-width: 1600px;
-        margin: 0 auto;
-    }
-
-    @media (max-width: 768px) {
-        .container-70 {
-            width: 92vw;
-        }
-    }
-
-    @media (max-width: 576px) {
-        .container-70 {
-            width: 96vw;
-        }
-    }
-
-    .filtros-exportar .campo-flex {
-        min-width: 180px;
-    }
-
-    .filtros-exportar .campo-busca {
-        min-width: 220px;
-        max-width: 300px;
-    }
-
-    @media (max-width: 991.98px) {
-        .filtros-exportar .campo-flex,
-        .filtros-exportar .campo-busca {
-            min-width: 100%;
-            max-width: 100%;
-        }
-    }
+    .container-70 { width: 85vw; max-width: 1600px; margin: 0 auto; }
+    @media (max-width: 768px) { .container-70 { width: 92vw; } }
+    @media (max-width: 576px) { .container-70 { width: 96vw; } }
+    .filtros-exportar .campo-flex { min-width: 180px; }
+    .filtros-exportar .campo-busca { min-width: 220px; max-width: 300px; }
+    @media (max-width: 991.98px) { .filtros-exportar .campo-flex, .filtros-exportar .campo-busca { min-width: 100%; max-width: 100%; } }
 </style>
 
         <div class="container-70">
@@ -347,9 +319,9 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             </span>
                         </div>
                         
-                        <div class="col-auto">
-                            <select name="vendedor_id" class="form-select form-select-sm border-secondary-subtle" style="width: 120px;" required>
-                                <option value="todos">Vendedores</option>
+                        <div class="col-auto" style="min-width: 220px;">
+                            <select name="vendedor_id" class="form-select form-select-sm border-secondary-subtle" required>
+                                <option value="todos">Todos os Vendedores</option>
                                 ${usuarios.filter(u => u.tipo === 'vendedor').map(u => `<option value="${u.id}">${u.nome}</option>`).join('')}
                             </select>
                         </div>
@@ -475,9 +447,8 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     ${modalListaClientes('modalInd_vendas', 'Indústria: Vendas Fechadas', indClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalInd_pos_venda', 'Indústria: Pós-Venda Realizado', indClientes.filter(c => c.pos_venda === 'sim'))}
     ${modalListaClientes('modalInd_visita', 'Indústria: Visita na Carteira Realizada', indClientes.filter(c => c.carteira === 'sim' && c.visitado === 'sim'))}
-    ${modalListaClientes('modalInd_reativacao', 'Indústria: Reativações Concluídas', indClientes.filter(c => c.parado === 'sim'))},
+    ${modalListaClientes('modalInd_reativacao', 'Indústria: Reativações Concluídas', indClientes.filter(c => c.parado === 'sim'))}
     ${modalListaClientes('modalInd_retencao', 'Indústria: Clientes Fidelizados (Recorrência)', indClientes.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim'))}
-
 
     <div class="modal fade" id="modalUsuario" tabindex="-1">
         <div class="modal-dialog">
@@ -674,8 +645,64 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         </div>
     </div>
 
+    <div class="modal fade" id="modalZerarCiclo" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <form action="/admin/zerar-ciclo" method="POST">
+                    <div class="modal-header bg-danger text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Zerar Ciclo Comercial</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 text-center">
+                        <i class="fa-solid fa-rotate-right fa-3x text-danger mb-3"></i>
+                        <h5 class="fw-bold text-dark">Tem certeza absoluta?</h5>
+                        <p class="text-muted mb-0">Esta ação irá arquivar todos os clientes atuais e <strong>zerar os pontos e as métricas</strong> de todos os vendedores instantaneamente.</p>
+                        <p class="text-muted small mt-2">Os clientes continuarão salvos no banco de dados, mas o painel começará um ciclo novo e limpo a partir de agora.</p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger fw-bold px-4">Sim, Zerar Tudo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    ${usuarios.filter(u => u.tipo === 'vendedor').map(u => `
+    <div class="modal fade" id="modalFaturamentoManual${u.id}" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg animate-modal">
+                <form action="/admin/faturamento-manual" method="POST">
+                    <div class="modal-header bg-success text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-sack-dollar me-2"></i> Ajuste Manual de Faturamento</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4">
+                        <input type="hidden" name="vendedor_id" value="${u.id}">
+                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="50" height="50" class="rounded-circle border me-3 shadow-sm" style="object-fit: cover;">
+                            <div>
+                                <h6 class="fw-bold text-dark mb-0">${u.nome}</h6>
+                                <span class="text-muted small text-uppercase">${u.setor}</span>
+                            </div>
+                        </div>
+                        
+                        <label class="form-label text-muted small fw-bold text-uppercase">Adicionar Faturamento Base (R$)</label>
+                        <p class="small text-muted mb-3">Este valor será somado diretamente ao faturamento do vendedor, afetando suas metas individuais e a Meta Global da equipe. Para diminuir, use o sinal de menos (Ex: -100).</p>
+                        
+                        <input type="number" step="0.01" name="faturamento_manual" class="form-control form-control-lg mb-2 fw-bold text-success" value="${u.faturamento_manual || 0}" placeholder="Ex: 5000.00" required>
+                    </div>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-success fw-bold px-4"><i class="fa-solid fa-check me-1"></i> Salvar Ajuste</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    `).join('')}
+
     ${usuarios.map(u => `
-        
         <div class="modal fade" id="modalEditarUsuario${u.id}" tabindex="-1">
             <div class="modal-dialog">
                 <div class="modal-content">
@@ -733,14 +760,14 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                 </div>
             </div>
         </div>
+    `).join('')}
 
-        <script>
+    <script>
     document.addEventListener("DOMContentLoaded", function() {
         const inputTexto = document.getElementById('filtroTextoAdmin');
         const containerPaginacao = document.getElementById('paginacaoAdminContainer');
         const linhaVazia = document.getElementById('linhaVaziaAdmin');
         
-        // Se a tabela não existir na tela (por segurança), interrompe o script
         if(!inputTexto || !containerPaginacao) return;
 
         const todasLinhas = Array.from(document.querySelectorAll('.cliente-admin-row'));
@@ -751,12 +778,10 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
         function aplicarFiltros() {
             const termo = inputTexto.value.toLowerCase();
-
             linhasAtuais = todasLinhas.filter(linha => {
                 const textoBusca = linha.getAttribute('data-busca');
                 return textoBusca.includes(termo);
             });
-
             paginaAtual = 1; 
             renderizarTabela();
         }
@@ -777,7 +802,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             const fim = inicio + itensPorPagina;
 
             linhasAtuais.slice(inicio, fim).forEach(l => l.style.display = '');
-
             renderizarPaginacao(totalPaginas);
         }
 
@@ -848,64 +872,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         aplicarFiltros();
     });
     </script>
-
-    ${todosClientes.map((c, index) => {
-            if (!c.observacao) return ''; // Só gera o modal se tiver observação
-            return `
-            <div class="modal fade" id="modalObsAdmin${index}" tabindex="-1">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content border-0 shadow-lg animate-modal">
-                        <div class="modal-header bg-info border-0">
-                            <h6 class="modal-title fw-bold text-white"><i class="fa-solid fa-note-sticky me-2"></i> Anotações do Cliente</h6>
-                            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                        </div>
-                        <div class="modal-body p-4">
-                            <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                                <div class="bg-light p-3 rounded-circle me-3"><i class="fa-solid fa-building text-info fa-2x"></i></div>
-                                <div>
-                                    <h5 class="fw-bold text-dark mb-0">${c.nome}</h5>
-                                    <span class="text-muted small"><i class="fa-solid fa-location-dot me-1 text-danger"></i> ${c.regiao || 'Região não informada'}</span><br>
-                                    <span class="badge bg-light text-dark border mt-1"><i class="fa-solid fa-user text-muted me-1"></i> Vend: ${c.vendedor_nome || 'Desconhecido'}</span>
-                                </div>
-                            </div>
-                            <h6 class="text-muted small text-uppercase fw-bold mb-2">Observação Registrada:</h6>
-                            <div class="bg-light-subtle border border-info-subtle p-3 rounded-3 shadow-sm">
-                                <p class="mb-0 text-dark" style="white-space: pre-wrap; font-size: 0.95rem;">${c.observacao}</p>
-                            </div>
-                        </div>
-                        <div class="modal-footer border-0">
-                            <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar Aba</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="modal fade" id="modalZerarCiclo" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <form action="/admin/zerar-ciclo" method="POST">
-                    <div class="modal-header bg-danger text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Zerar Ciclo Comercial</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-4 text-center">
-                        <i class="fa-solid fa-rotate-right fa-3x text-danger mb-3"></i>
-                        <h5 class="fw-bold text-dark">Tem certeza absoluta?</h5>
-                        <p class="text-muted mb-0">Esta ação irá arquivar todos os clientes atuais e <strong>zerar os pontos e as métricas</strong> de todos os vendedores instantaneamente.</p>
-                        <p class="text-muted small mt-2">Os clientes continuarão salvos no banco de dados, mas o painel começará um ciclo novo e limpo a partir de agora.</p>
-                    </div>
-                    <div class="modal-footer border-0 justify-content-center bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger fw-bold px-4">Sim, Zerar Tudo</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-            `;
-        }).join('')}
-
-    `).join('')}
 
 `);
 };
