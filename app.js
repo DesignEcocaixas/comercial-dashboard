@@ -699,7 +699,10 @@ app.get('/vendedor', checarAuth, async (req, res) => {
             SUM(IF(fechou = 'sim' AND valor_venda >= ?, 1, 0)) AS qtd_cliente_grande,
             SUM(IF(fechou = 'sim', valor_venda, 0)) AS valor_total_vendas, 
             SUM(IF(pos_venda = 'sim', 1, 0)) AS pos_venda,
-            SUM(IF(carteira = 'sim' AND visitado = 'sim', 1, 0)) AS visitas_carteira,
+            
+            /* CORREÇÃO APLICADA AQUI: carteira = 'sim' AND prospeccao = 'com_visita' */
+            SUM(IF(carteira = 'sim' AND prospeccao = 'com_visita', 1, 0)) AS visitas_carteira,
+            
             SUM(IF(parado = 'sim', 1, 0)) AS reativacoes,
             SUM(IF(carteira = 'sim', 1, 0)) AS total_carteira,
             SUM(IF(carteira = 'sim' AND comprou_recorrente = 'sim', 1, 0)) AS total_fidelizados

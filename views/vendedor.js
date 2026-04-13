@@ -31,7 +31,7 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
     return `
         <div class="col-6 col-md-3 mb-3 animate-up">
             <div class="card shadow-sm border-start border-${cor} border-4 h-100 kpi-card"
-                 ${modalId ? `data-bs-toggle="modal" data-bs-target="#${modalId}"` : ''}>
+                 ${modalId ? `data-bs-toggle="modal" data-bs-target="#${modalId}"` : ''} style="${modalId ? 'cursor: pointer;' : ''}">
                 <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
                     <div>
                         <h6 class="text-muted mb-0" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">${titulo}</h6>
@@ -91,12 +91,6 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
     const totalCarteira = kpis.total_carteira || 0;
     const totalFidelizados = kpis.total_fidelizados || 0;
     const taxaRetencaoAlcancada = totalCarteira > 0 ? (totalFidelizados / totalCarteira) * 100 : 0;
-
-    // --- LÓGICA DE FATURAMENTO MANUAL ---
-    // Os valores já vêm calculados e embutidos perfeitamente direto do app.js!
-    // Portanto, removemos a soma dupla aqui no front-end para evitar duplicações.
-    const somaManualTotal = 0; 
-    const minhaMetaReal = Number(kpis.valor_total_vendas || 0);
 
     return layout(`
     
@@ -160,12 +154,12 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
         <div class="row mb-4 align-items-stretch">
             
             ${(() => {
-                // O valor manual já vem somado direto do app.js!
                 const vAlcancado = Number(alcancadoGlobal) || 0;
                 const vMeta = Number(metaGlobal) || 0;
                 const corGlobal = (vAlcancado >= vMeta && vMeta > 0) ? 'success' : 'primary';
                 const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
                 
+                // Descobre o mês atual e deixa a primeira letra maiúscula
                 const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
                 const mesNome = mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1);
 
@@ -248,9 +242,10 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             </thead>
                             <tbody>
                                 ${(() => {
-                                    const rankingFaturamento = usuarios.map(v => {
+                                    const vendedores = usuarios.filter(u => u.tipo === 'vendedor');
+                                    const rankingFaturamento = vendedores.map(v => {
                                         const vendasDoVendedor = todosClientes.filter(c => c.vendedor_id === v.id && c.fechou === 'sim');
-                                        // SOMA O VALOR MANUAL AO TOTAL DO VENDEDOR NO RANKING
+                                        // CORREÇÃO: Adicionado a soma do faturamento_manual
                                         const totalVendido = vendasDoVendedor.reduce((acc, curr) => acc + Number(curr.valor_venda), 0) + Number(v.faturamento_manual || 0);
                                         return { ...v, totalVendido };
                                     });
@@ -288,7 +283,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                     ${kpiCard('Novos Clientes', kpis.clientes_fechar, metas.qtd_clientes_fechar, 'fa-user-check', false, 'modalKpi_fechar')}
                     ${kpiCard('Cliente Grande', kpis.qtd_cliente_grande, metas.qtd_cliente_grande, 'fa-gem', false, 'modalKpi_grande')}
                     
-                    ${kpiCard('Minha Meta', minhaMetaReal, metas.meta_geral, 'fa-sack-dollar', true, 'modalKpi_vendas')}
+                    ${kpiCard('Minha Meta', kpis.valor_total_vendas, metas.meta_geral, 'fa-sack-dollar', true, 'modalKpi_vendas')}
                     
                     ${kpiCard('Pós-Venda Feito', kpis.pos_venda, metas.qtd_pos_venda, 'fa-headset', false, 'modalKpi_pos_venda')}
                     ${kpiCard('Visitas Carteira', kpis.visitas_carteira, metas.qtd_visitas_carteira, 'fa-car', false, 'modalKpi_visita')}
@@ -487,7 +482,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
     ${modalListaClientes('modalKpi_grande', 'Negócios de Grande Porte', clientes.filter(c => c.fechou === 'sim' && c.valor_venda >= minGrande))}
     ${modalListaClientes('modalKpi_vendas', 'Faturamento Individual Realizado', clientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalKpi_pos_venda', 'Pós-Venda Realizado', clientes.filter(c => c.pos_venda === 'sim'))}
-    ${modalListaClientes('modalKpi_visita', 'Manutenção de Carteira (Visitas)', clientes.filter(c => c.carteira === 'sim' && c.visitado === 'sim'))}
+    ${modalListaClientes('modalKpi_visita', 'Manutenção de Carteira (Visitas)', clientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
     ${modalListaClientes('modalKpi_reativacao', 'Reativações de Clientes Inativos', clientes.filter(c => c.parado === 'sim'))}
     ${modalListaClientes('modalKpi_retencao', 'Fidelização (Clientes Recompradores)', clientes.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim'))}
 

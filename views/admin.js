@@ -1,6 +1,6 @@
 const layout = require('./layout');
 
-// Função: Formata nativamente para o padrão R$ 0.000,00
+// NOVA FUNÇÃO: Formata nativamente para o padrão R$ 0.000,00
 const formatarBRL = (valor) => {
     return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
@@ -67,14 +67,14 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
                             </tr>
                         </thead>
                         <tbody>
-                            ${clientesFiltrados.length > 0 ? clientesFiltrados.map(c => `
+                            ${clientesFiltrados && clientesFiltrados.length > 0 ? clientesFiltrados.map(c => `
                                 <tr>
                                     <td class="ps-3 py-2 fw-medium text-dark">${c.nome}</td>
                                     <td class="py-2 text-muted">${c.vendedor_nome}</td>
                                     <td class="py-2 text-success">${formatarBRL(c.valor_venda)}</td>
                                     <td class="py-2">${c.fechou === 'sim' ? '<span class="badge bg-success" style="font-size: 0.65rem;">Fechou</span>' : '<span class="badge bg-secondary" style="font-size: 0.65rem;">Pendente</span>'}</td>
                                 </tr>
-                            `).join('') : `<tr><td colspan="4" class="text-center text-muted py-4">Nenhum cliente compõe este indicador ainda.</td></tr>`}
+                            `).join('') : `<tr><td colspan="4" class="text-center text-muted py-4">Nenhum cliente compõe este indicador.</td></tr>`}
                         </tbody>
                     </table>
                 </div>
@@ -83,13 +83,12 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
     </div>
 `;
 
-// IMPORTANTE: Adicionado o dadosMeta = {} nos parâmetros
 module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlobal, todosClientes = [], dadosMeta = {}) => {
 
     const ecoClientes = todosClientes.filter(c => c.setor === 'ecommerce');
     const indClientes = todosClientes.filter(c => c.setor === 'industria');
     
-    // INTEGRAÇÃO DO FATURAMENTO MANUAL NOS KPIS E METAS (Soma silenciosa)
+    // INTEGRAÇÃO DO FATURAMENTO MANUAL NOS KPIS E METAS
     const somaManualTotal = usuarios.reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
     
     const somaManualEco = usuarios.filter(u => u.setor === 'ecommerce').reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
@@ -98,7 +97,14 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     const somaManualInd = usuarios.filter(u => u.setor === 'industria').reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
     const metaIndReal = Number(kpis.industria?.valor_total_vendas || 0) + somaManualInd;
 
-    // Cálculo para o KPI da Indústria
+    // CORREÇÃO DOS INDICADORES E MODAIS
+    const ecoNovosClientes = ecoClientes.filter(c => c.fechou === 'sim').length;
+    const ecoVisitasCarteira = ecoClientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
+
+    const indNovosClientes = indClientes.filter(c => c.fechou === 'sim').length;
+    const indVisitasCarteira = indClientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
+
+    // Cálculo para o KPI da Indústria (Fidelização)
     const totalCarteiraInd = kpis.industria?.total_carteira || 0;
     const fidelizadosInd = kpis.industria?.total_fidelizados || 0;
     const taxaAlcancadaInd = totalCarteiraInd > 0 ? (fidelizadosInd / totalCarteiraInd) * 100 : 0;
@@ -267,11 +273,11 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="row mx-0">
                         ${kpiCard('Prosp. Sem Visita', kpis.ecommerce?.prosp_sem_visita, metas.ecommerce?.qtd_prosp_sem_visita, 'fa-phone', false, 'modalEco_sem_visita')}
                         ${kpiCard('Prosp. Com Visita', kpis.ecommerce?.prosp_com_visita, metas.ecommerce?.qtd_prosp_com_visita, 'fa-handshake', false, 'modalEco_com_visita')}
-                        ${kpiCard('Clientes p/ Fechar', kpis.ecommerce?.clientes_fechar, metas.ecommerce?.qtd_clientes_fechar, 'fa-clock', false, 'modalEco_fechar')}
+                        ${kpiCard('Novos Clientes', ecoNovosClientes, metas.ecommerce?.qtd_clientes_fechar, 'fa-user-check', false, 'modalEco_fechar')}
                         ${kpiCard('QTD Cliente Grande', kpis.ecommerce?.qtd_cliente_grande, metas.ecommerce?.qtd_cliente_grande, 'fa-gem', false, 'modalEco_grande')}
                         ${kpiCard('Meta E-commerce', metaEcoReal, metas.ecommerce?.meta_geral, 'fa-sack-dollar', true, 'modalEco_vendas')}
                         ${kpiCard('Pós-Venda Feito', kpis.ecommerce?.pos_venda, metas.ecommerce?.qtd_pos_venda, 'fa-headset', false, 'modalEco_pos_venda')}
-                        ${kpiCard('Visitas Carteira', kpis.ecommerce?.visitas_carteira, metas.ecommerce?.qtd_visitas_carteira, 'fa-car', false, 'modalEco_visita')}
+                        ${kpiCard('Visitas Carteira', ecoVisitasCarteira, metas.ecommerce?.qtd_visitas_carteira, 'fa-car', false, 'modalEco_visita')}
                         ${kpiCard('Reativações', kpis.ecommerce?.reativacoes, metas.ecommerce?.qtd_reativacoes, 'fa-rotate-right', false, 'modalEco_reativacao')}
                     </div>
                 </div>
@@ -285,11 +291,11 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="row mx-0">
                         ${kpiCard('Prosp. Sem Visita', kpis.industria?.prosp_sem_visita, metas.industria?.qtd_prosp_sem_visita, 'fa-phone', false, 'modalInd_sem_visita')}
                         ${kpiCard('Prosp. Com Visita', kpis.industria?.prosp_com_visita, metas.industria?.qtd_prosp_com_visita, 'fa-handshake', false, 'modalInd_com_visita')}
-                        ${kpiCard('Clientes p/ Fechar', kpis.industria?.clientes_fechar, metas.industria?.qtd_clientes_fechar, 'fa-clock', false, 'modalInd_fechar')}
+                        ${kpiCard('Novos Clientes', indNovosClientes, metas.industria?.qtd_clientes_fechar, 'fa-user-check', false, 'modalInd_fechar')}
                         ${kpiCard('QTD Cliente Grande', kpis.industria?.qtd_cliente_grande, metas.industria?.qtd_cliente_grande, 'fa-gem', false, 'modalInd_grande')}
                         ${kpiCard('Meta Indústria', metaIndReal, metas.industria?.meta_geral, 'fa-sack-dollar', true, 'modalInd_vendas')}
                         ${kpiCard('Pós-Venda Feito', kpis.industria?.pos_venda, metas.industria?.qtd_pos_venda, 'fa-headset', false, 'modalInd_pos_venda')}
-                        ${kpiCard('Visitas Carteira', kpis.industria?.visitas_carteira, metas.industria?.qtd_visitas_carteira, 'fa-car', false, 'modalInd_visita')}
+                        ${kpiCard('Visitas Carteira', indVisitasCarteira, metas.industria?.qtd_visitas_carteira, 'fa-car', false, 'modalInd_visita')}
                         ${kpiCard('Reativações', kpis.industria?.reativacoes, metas.industria?.qtd_reativacoes, 'fa-rotate-right', false, 'modalInd_reativacao')}
                         ${kpiCard('Taxa Retenção', taxaAlcancadaInd, metas.industria?.taxa_retencao || 40, 'fa-chart-pie', false, 'modalInd_retencao', true)}
                     </div>
@@ -379,7 +385,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                         </div>
                                     </td>
                                     <td class="text-end pe-4">
-                                        ${c.observacao ? `<button class="btn btn-sm btn-outline-info rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#modalObsAdmin${index}" title="Ver Observação"><i class="fa-solid fa-eye"></i></button>` : '<span class="text-muted small">-</span>'}
+                                        <button class="btn btn-sm btn-outline-info rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#modalObsAdmin${index}" title="Ver Observação"><i class="fa-solid fa-eye"></i></button>
                                     </td>
                                 </tr>
                                 `).join('')}
@@ -393,20 +399,20 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
     ${modalListaClientes('modalEco_sem_visita', 'E-commerce: Prospecção Sem Visita', ecoClientes.filter(c => c.prospeccao === 'sem_visita'))}
     ${modalListaClientes('modalEco_com_visita', 'E-commerce: Prospecção Com Visita', ecoClientes.filter(c => c.prospeccao === 'com_visita'))}
-    ${modalListaClientes('modalEco_fechar', 'E-commerce: Clientes Pendentes (Para fechar)', ecoClientes.filter(c => c.fechou === 'nao'))}
+    ${modalListaClientes('modalEco_fechar', 'E-commerce: Novos Clientes', ecoClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalEco_grande', 'E-commerce: Clientes Grandes (> R$ 5k)', ecoClientes.filter(c => c.fechou === 'sim' && c.valor_venda >= 5000))}
     ${modalListaClientes('modalEco_vendas', 'E-commerce: Vendas Fechadas', ecoClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalEco_pos_venda', 'E-commerce: Pós-Venda Realizado', ecoClientes.filter(c => c.pos_venda === 'sim'))}
-    ${modalListaClientes('modalEco_visita', 'E-commerce: Visita na Carteira Realizada', ecoClientes.filter(c => c.carteira === 'sim' && c.visitado === 'sim'))}
+    ${modalListaClientes('modalEco_visita', 'E-commerce: Visita na Carteira Realizada', ecoClientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
     ${modalListaClientes('modalEco_reativacao', 'E-commerce: Reativações Concluídas', ecoClientes.filter(c => c.parado === 'sim'))}
 
     ${modalListaClientes('modalInd_sem_visita', 'Indústria: Prospecção Sem Visita', indClientes.filter(c => c.prospeccao === 'sem_visita'))}
     ${modalListaClientes('modalInd_com_visita', 'Indústria: Prospecção Com Visita', indClientes.filter(c => c.prospeccao === 'com_visita'))}
-    ${modalListaClientes('modalInd_fechar', 'Indústria: Clientes Pendentes (Para fechar)', indClientes.filter(c => c.fechou === 'nao'))}
+    ${modalListaClientes('modalInd_fechar', 'Indústria: Novos Clientes', indClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalInd_grande', 'Indústria: Clientes Grandes (> R$ 15k)', indClientes.filter(c => c.fechou === 'sim' && c.valor_venda >= 15000))}
     ${modalListaClientes('modalInd_vendas', 'Indústria: Vendas Fechadas', indClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalInd_pos_venda', 'Indústria: Pós-Venda Realizado', indClientes.filter(c => c.pos_venda === 'sim'))}
-    ${modalListaClientes('modalInd_visita', 'Indústria: Visita na Carteira Realizada', indClientes.filter(c => c.carteira === 'sim' && c.visitado === 'sim'))}
+    ${modalListaClientes('modalInd_visita', 'Indústria: Visita na Carteira Realizada', indClientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
     ${modalListaClientes('modalInd_reativacao', 'Indústria: Reativações Concluídas', indClientes.filter(c => c.parado === 'sim'))}
     ${modalListaClientes('modalInd_retencao', 'Indústria: Clientes Fidelizados (Recorrência)', indClientes.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim'))}
 
@@ -442,7 +448,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         </div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp sem visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${metas.ecommerce?.qtd_prosp_sem_visita || 0}"></div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp com visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${metas.ecommerce?.qtd_prosp_com_visita || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Clientes p/ fechar</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.ecommerce?.qtd_clientes_fechar || 0}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.ecommerce?.qtd_clientes_fechar || 0}"></div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Cliente Grande (>5k)</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${metas.ecommerce?.qtd_cliente_grande || 0}"></div>
                         <div class="col-md-6 mb-2">
                             <label class="form-label small text-muted mb-0">Valor Total Cliente Grande (R$)</label>
@@ -472,7 +478,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         </div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp sem visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${metas.industria?.qtd_prosp_sem_visita || 0}"></div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp com visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${metas.industria?.qtd_prosp_com_visita || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Clientes p/ fechar</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.industria?.qtd_clientes_fechar || 0}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.industria?.qtd_clientes_fechar || 0}"></div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Cliente Grande (>15k)</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${metas.industria?.qtd_cliente_grande || 0}"></div>
                         <div class="col-md-6 mb-2">
                             <label class="form-label small text-muted mb-0">Valor Total Cliente Grande (R$)</label>
@@ -557,28 +563,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     </div>
     `).join('')}
 
-    <div class="modal fade" id="modalZerarCiclo" tabindex="-1">
-        <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
-                <form action="/admin/zerar-ciclo" method="POST">
-                    <div class="modal-header bg-danger text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Zerar Ciclo Comercial</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
-                    <div class="modal-body p-4 text-center">
-                        <i class="fa-solid fa-rotate-right fa-3x text-danger mb-3"></i>
-                        <h5 class="fw-bold text-dark">Tem certeza absoluta?</h5>
-                        <p class="text-muted mb-0">Esta ação irá arquivar todos os clientes atuais e <strong>zerar os pontos e as métricas</strong> de todos os vendedores instantaneamente.</p>
-                    </div>
-                    <div class="modal-footer border-0 justify-content-center bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger fw-bold px-4">Sim, Zerar Tudo</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-    </div>
-
     <div class="modal fade" id="modalGerenciarUsuarios" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
@@ -635,7 +619,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         </div>
                         <div class="modal-footer justify-content-between">
                             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
-                            <button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar</button>
+                            <button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar Alterações</button>
                         </div>
                     </form>
                 </div>
@@ -649,7 +633,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa-solid fa-triangle-exclamation me-2"></i> Atenção!</h5></div>
                         <div class="modal-body">
                             <input type="hidden" name="id" value="${u.id}">
-                            <p>Tem certeza que deseja excluir <strong>${u.nome}</strong>?</p>
+                            <p>Tem certeza que deseja excluir o usuário <strong>${u.nome}</strong>?</p>
                         </div>
                         <div class="modal-footer justify-content-between">
                             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
@@ -661,18 +645,58 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         </div>
     `).join('')}
 
-    ${todosClientes.filter(c => c.observacao).map((c, index) => `
+    ${todosClientes.map((c, index) => {
+        if (!c.observacao) return '';
+        return `
         <div class="modal fade" id="modalObsAdmin${index}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg animate-modal">
                     <div class="modal-header bg-info border-0"><h6 class="modal-title fw-bold text-white"><i class="fa-solid fa-note-sticky me-2"></i> Anotações do Cliente</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body p-4">
-                        <p class="mb-0 text-dark" style="white-space: pre-wrap; font-size: 0.95rem;">${c.observacao}</p>
+                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
+                            <div class="bg-light p-3 rounded-circle me-3"><i class="fa-solid fa-building text-info fa-2x"></i></div>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0">${c.nome}</h5>
+                                <span class="text-muted small"><i class="fa-solid fa-location-dot me-1 text-danger"></i> ${c.regiao || 'Região não informada'}</span><br>
+                                <span class="badge bg-light text-dark border mt-1"><i class="fa-solid fa-user text-muted me-1"></i> Vend: ${c.vendedor_nome || 'Desconhecido'}</span>
+                            </div>
+                        </div>
+                        <h6 class="text-muted small text-uppercase fw-bold mb-2">Observação Registrada:</h6>
+                        <div class="bg-light-subtle border border-info-subtle p-3 rounded-3 shadow-sm">
+                            <p class="mb-0 text-dark" style="white-space: pre-wrap; font-size: 0.95rem;">${c.observacao}</p>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar Aba</button>
                     </div>
                 </div>
             </div>
         </div>
-    `).join('')}
+        `;
+    }).join('')}
+
+    <div class="modal fade" id="modalZerarCiclo" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <form action="/admin/zerar-ciclo" method="POST">
+                    <div class="modal-header bg-danger text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Zerar Ciclo Comercial</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 text-center">
+                        <i class="fa-solid fa-rotate-right fa-3x text-danger mb-3"></i>
+                        <h5 class="fw-bold text-dark">Tem certeza absoluta?</h5>
+                        <p class="text-muted mb-0">Esta ação irá arquivar todos os clientes atuais e <strong>zerar os pontos e as métricas</strong> de todos os vendedores instantaneamente.</p>
+                        <p class="text-muted small mt-2">Os clientes continuarão salvos no banco de dados, mas o painel começará um ciclo novo e limpo a partir de agora.</p>
+                    </div>
+                    <div class="modal-footer border-0 justify-content-center bg-light">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-danger fw-bold px-4">Sim, Zerar Tudo</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {
@@ -686,7 +710,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                 valor = Number(valor).toFixed(2);
             }
             
-            // Aceita o sinal de menos se o Admin digitar faturamento negativo
             const isNegativo = valor.startsWith('-');
             valor = valor.replace(/\\D/g, "");
 
