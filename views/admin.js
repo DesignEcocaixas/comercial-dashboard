@@ -13,7 +13,7 @@ const formatarData = (dataStr) => {
     return d.toLocaleDateString('pt-BR');
 };
 
-const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId = '', formatarPercentual = false) => {
+const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId = '', formatarPercentual = false, isSmall = false) => {
     const numAlcancado = Number(alcancado) || 0;
     const numMeta = Number(meta) || 0;
     const cor = (numAlcancado >= numMeta && numMeta > 0) ? 'success' : 'primary';
@@ -29,17 +29,35 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
         textoMeta = numMeta.toFixed(0) + '%';
     }
 
+    // Configurações de tamanho mantidas, mas sem forçar numa única linha
+    const paddingClass = isSmall ? 'py-1 px-2' : 'py-2 px-3';
+    const titleSize = isSmall ? '0.60rem' : '0.8rem';
+    const valSize = (isSmall && formatarMoeda) ? '0.75rem' : (isSmall ? '0.85rem' : '1.1rem'); 
+    const metaSize = isSmall ? '0.65rem' : '0.85rem';
+    
+    const iconBox = isSmall ? 'width: 24px; height: 24px;' : 'width: 40px; height: 40px;';
+    const iconFont = isSmall ? '0.65rem' : '1.1rem';
+    
+    const colClass = isSmall ? 'col-6 col-lg-4 col-xl-3 mb-2 px-1' : 'col-6 col-md-3 mb-3';
+    const borderSize = isSmall ? 'border-3' : 'border-4';
+
     return `
-        <div class="col-6 col-md-3 mb-3 animate-up">
-            <div class="card shadow-sm border-start border-${cor} border-4 h-100 kpi-card"
+        <div class="${colClass} animate-up">
+            <div class="card shadow-sm border-start border-${cor} ${borderSize} h-100 kpi-card"
                  ${modalId ? `data-bs-toggle="modal" data-bs-target="#${modalId}"` : ''} style="${modalId ? 'cursor: pointer; transition: 0.2s;' : ''}" onmouseover="this.classList.add('bg-light')" onmouseout="this.classList.remove('bg-light')">
-                <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-0" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">${titulo}</h6>
-                        <span class="mb-0 fw-bold text-${cor}" style="font-size: 1.1rem;">${textoAlcancado} <span class="text-muted fw-normal" style="font-size: 0.85rem;">/ ${textoMeta}</span></span>
+                
+                <div class="card-body ${paddingClass} d-flex justify-content-between align-items-center gap-1">
+                    
+                    <div style="min-width: 0; flex-grow: 1; padding-right: 2px;">
+                        <h6 class="text-muted mb-0 text-truncate" style="font-size: ${titleSize}; text-transform: uppercase; letter-spacing: 0.2px;" title="${titulo}">${titulo}</h6>
+                        
+                        <div class="mb-0 fw-bold text-${cor}" style="font-size: ${valSize}; line-height: 1.2;">
+                            ${textoAlcancado} <span class="text-muted fw-normal d-inline-block" style="font-size: ${metaSize};">/ ${textoMeta}</span>
+                        </div>
                     </div>
-                    <div class="bg-light text-${cor} rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
-                        <i class="fa-solid ${icone}" style="font-size: 1.1rem;"></i>
+
+                    <div class="bg-light text-${cor} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="${iconBox}">
+                        <i class="fa-solid ${icone}" style="font-size: ${iconFont};"></i>
                     </div>
                 </div>
             </div>
@@ -221,7 +239,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                 <td class="ps-3 py-2">
                                                     <div class="d-flex align-items-center">
                                                         <div class="position-relative me-2">
-                                                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
+                                                            <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
                                                             ${index === 0 ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.55rem;"><i class="fa-solid fa-crown"></i></span>' : ''}
                                                         </div>
                                                         <div class="d-flex flex-column">
@@ -264,7 +282,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                 <tr style="cursor: pointer; transition: 0.2s;" onmouseover="this.classList.add('bg-light')" onmouseout="this.classList.remove('bg-light')" data-bs-toggle="modal" data-bs-target="#modalFaturamentoManual${u.id}" title="Ajustar Faturamento Manualmente">
                                                     <td class="ps-3 py-2">
                                                         <div class="d-flex align-items-center">
-                                                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
+                                                            <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
                                                             <span class="fw-bold text-dark" style="font-size: 0.85rem;">${u.nome}</span>
                                                         </div>
                                                     </td>
@@ -282,43 +300,48 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
                 </div>
 
-                <div class="card shadow-sm rounded-3 border mb-3 animate-up" style="animation-delay: 0.4s;">
-                    <div class="card-header bg-white text-primary fw-bold py-3 border-0" style="font-size: 0.95rem;">
-                        <i class="fa-solid fa-chart-line me-2"></i> Métricas: E-Commerce (Soma da Equipe)
+                <div class="row mb-4 align-items-stretch">
+                    <div class="col-xl-6 mb-3 mb-xl-0 d-flex animate-up" style="animation-delay: 0.4s;">
+                        <div class="card shadow-sm rounded-3 border w-100">
+                            <div class="card-header bg-white text-primary fw-bold py-2 border-0" style="font-size: 0.9rem;">
+                                <i class="fa-solid fa-chart-line me-2"></i> E-Commerce (Soma da Equipe)
+                            </div>
+                            <div class="card-body pb-1 bg-light px-2 pt-3">
+                                <div class="row mx-0 px-0 g-2">
+                                    ${kpiCard('S/ Visita', sumEcoKpi.sem, sumEcoMeta.sem, 'fa-phone', false, 'modalEco_sem_visita', false, true)}
+                                    ${kpiCard('C/ Visita', sumEcoKpi.com, sumEcoMeta.com, 'fa-handshake', false, 'modalEco_com_visita', false, true)}
+                                    ${kpiCard('Novos Cli.', sumEcoKpi.novos, sumEcoMeta.novos, 'fa-user-check', false, 'modalEco_fechar', false, true)}
+                                    ${kpiCard('Cli. Grande', sumEcoKpi.grande, sumEcoMeta.grande, 'fa-gem', false, 'modalEco_grande', false, true)}
+                                    ${kpiCard('Vendas', sumEcoKpi.vendas, sumEcoMeta.vendas, 'fa-sack-dollar', true, 'modalEco_vendas', false, true)}
+                                    ${kpiCard('Pós-Venda', sumEcoKpi.pos, sumEcoMeta.pos, 'fa-headset', false, 'modalEco_pos_venda', false, true)}
+                                    ${kpiCard('Visita Cart.', sumEcoKpi.visita, sumEcoMeta.visita, 'fa-car', false, 'modalEco_visita', false, true)}
+                                    ${kpiCard('Reativações', sumEcoKpi.reativ, sumEcoMeta.reativ, 'fa-rotate-right', false, 'modalEco_reativacao', false, true)}
+                                </div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body pb-0 bg-light px-2 pt-3">
-                        <div class="row mx-0">
-                            ${kpiCard('Prosp. Sem Visita', sumEcoKpi.sem, sumEcoMeta.sem, 'fa-phone', false, 'modalEco_sem_visita')}
-                            ${kpiCard('Prosp. Com Visita', sumEcoKpi.com, sumEcoMeta.com, 'fa-handshake', false, 'modalEco_com_visita')}
-                            ${kpiCard('Novos Clientes', sumEcoKpi.novos, sumEcoMeta.novos, 'fa-user-check', false, 'modalEco_fechar')}
-                            ${kpiCard('QTD Cliente Grande', sumEcoKpi.grande, sumEcoMeta.grande, 'fa-gem', false, 'modalEco_grande')}
-                            ${kpiCard('Meta E-commerce', sumEcoKpi.vendas, sumEcoMeta.vendas, 'fa-sack-dollar', true, 'modalEco_vendas')}
-                            ${kpiCard('Pós-Venda Feito', sumEcoKpi.pos, sumEcoMeta.pos, 'fa-headset', false, 'modalEco_pos_venda')}
-                            ${kpiCard('Visitas Carteira', sumEcoKpi.visita, sumEcoMeta.visita, 'fa-car', false, 'modalEco_visita')}
-                            ${kpiCard('Reativações', sumEcoKpi.reativ, sumEcoMeta.reativ, 'fa-rotate-right', false, 'modalEco_reativacao')}
+
+                    <div class="col-xl-6 d-flex animate-up" style="animation-delay: 0.4s;">
+                        <div class="card shadow-sm rounded-3 border w-100">
+                            <div class="card-header bg-white text-warning fw-bold py-2 border-0" style="font-size: 0.9rem;">
+                                <i class="fa-solid fa-building text-warning me-2"></i> Indústria (Soma da Equipe)
+                            </div>
+                            <div class="card-body pb-1 bg-light px-2 pt-3">
+                                <div class="row mx-0 px-0 g-2">
+                                    ${kpiCard('S/ Visita', sumIndKpi.sem, sumIndMeta.sem, 'fa-phone', false, 'modalInd_sem_visita', false, true)}
+                                    ${kpiCard('C/ Visita', sumIndKpi.com, sumIndMeta.com, 'fa-handshake', false, 'modalInd_com_visita', false, true)}
+                                    ${kpiCard('Novos Cli.', sumIndKpi.novos, sumIndMeta.novos, 'fa-user-check', false, 'modalInd_fechar', false, true)}
+                                    ${kpiCard('Cli. Grande', sumIndKpi.grande, sumIndMeta.grande, 'fa-gem', false, 'modalInd_grande', false, true)}
+                                    ${kpiCard('Vendas', sumIndKpi.vendas, sumIndMeta.vendas, 'fa-sack-dollar', true, 'modalInd_vendas', false, true)}
+                                    ${kpiCard('Pós-Venda', sumIndKpi.pos, sumIndMeta.pos, 'fa-headset', false, 'modalInd_pos_venda', false, true)}
+                                    ${kpiCard('Visita Cart.', sumIndKpi.visita, sumIndMeta.visita, 'fa-car', false, 'modalInd_visita', false, true)}
+                                    ${kpiCard('Reativações', sumIndKpi.reativ, sumIndMeta.reativ, 'fa-rotate-right', false, 'modalInd_reativacao', false, true)}
+                                    ${kpiCard('Retenção', taxaAlcancadaInd, taxaMetaInd, 'fa-chart-pie', false, 'modalInd_retencao', true, true)}
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-
-                <div class="card shadow-sm rounded-3 border mb-4 animate-up" style="animation-delay: 0.4s;">
-                    <div class="card-header bg-white text-warning fw-bold py-3 border-0" style="font-size: 0.95rem;">
-                        <i class="fa-solid fa-building text-warning me-2"></i> Métricas: Indústria (Soma da Equipe)
-                    </div>
-                    <div class="card-body pb-0 bg-light px-2 pt-3">
-                        <div class="row mx-0">
-                            ${kpiCard('Prosp. Sem Visita', sumIndKpi.sem, sumIndMeta.sem, 'fa-phone', false, 'modalInd_sem_visita')}
-                            ${kpiCard('Prosp. Com Visita', sumIndKpi.com, sumIndMeta.com, 'fa-handshake', false, 'modalInd_com_visita')}
-                            ${kpiCard('Novos Clientes', sumIndKpi.novos, sumIndMeta.novos, 'fa-user-check', false, 'modalInd_fechar')}
-                            ${kpiCard('QTD Cliente Grande', sumIndKpi.grande, sumIndMeta.grande, 'fa-gem', false, 'modalInd_grande')}
-                            ${kpiCard('Meta Indústria', sumIndKpi.vendas, sumIndMeta.vendas, 'fa-sack-dollar', true, 'modalInd_vendas')}
-                            ${kpiCard('Pós-Venda Feito', sumIndKpi.pos, sumIndMeta.pos, 'fa-headset', false, 'modalInd_pos_venda')}
-                            ${kpiCard('Visitas Carteira', sumIndKpi.visita, sumIndMeta.visita, 'fa-car', false, 'modalInd_visita')}
-                            ${kpiCard('Reativações', sumIndKpi.reativ, sumIndMeta.reativ, 'fa-rotate-right', false, 'modalInd_reativacao')}
-                            ${kpiCard('Taxa Retenção', taxaAlcancadaInd, taxaMetaInd, 'fa-chart-pie', false, 'modalInd_retencao', true)}
-                        </div>
-                    </div>
-                </div>
-
                 <div class="d-flex align-items-center mb-3 mt-5 animate-up">
                     <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-user-tie text-primary me-2"></i>Métricas Individuais por Vendedor</h5>
                     <div class="border-bottom flex-grow-1 ms-3"></div>
@@ -343,7 +366,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="card shadow-sm rounded-3 border mb-4 animate-up">
                         <div class="card-header bg-white text-dark fw-bold py-3 border-0 d-flex justify-content-between align-items-center" style="font-size: 0.95rem;">
                             <div class="d-flex align-items-center">
-                                <img src="${u.foto || 'https://via.placeholder.com/40'}" width="35" height="35" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
+                                <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="35" height="35" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
                                 <span class="me-2">${u.nome}</span>
                                 <span class="badge bg-${u.setor === 'ecommerce' ? 'primary' : 'warning text-dark'} text-uppercase" style="font-size: 0.65rem;">${u.setor}</span>
                             </div>
@@ -373,7 +396,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     ${modalListaClientes(`modalIndiv_vendas_${u.id}`, `Vendas Fechadas: ${u.nome}`, clientesU.filter(c => c.fechou === 'sim'))}
                     ${modalListaClientes(`modalIndiv_pos_venda_${u.id}`, `Pós-Venda Realizado: ${u.nome}`, clientesU.filter(c => c.pos_venda === 'sim'))}
                     ${modalListaClientes(`modalIndiv_visita_${u.id}`, `Visitas na Carteira: ${u.nome}`, clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
-                    ${modalListaClientes(`modalIndiv_reativacao_${u.id}`, `Reativações: ${u.nome}`, clientesU.filter(c => c.parado === 'sim'))}
+                    ${modalListaClientes(`modalIndiv_reativacao_${u.id}`, `Reativações: ${u.nome}`, clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim'))}
                     ${u.setor === 'industria' ? modalListaClientes(`modalIndiv_retencao_${u.id}`, `Clientes Fidelizados: ${u.nome}`, clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim')) : ''}
                     `;
                 }).join('')}
@@ -482,7 +505,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     ${modalListaClientes('modalEco_vendas', 'E-commerce: Vendas Fechadas', ecoClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalEco_pos_venda', 'E-commerce: Pós-Venda Realizado', ecoClientes.filter(c => c.pos_venda === 'sim'))}
     ${modalListaClientes('modalEco_visita', 'E-commerce: Visita na Carteira Realizada', ecoClientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
-    ${modalListaClientes('modalEco_reativacao', 'E-commerce: Reativações Concluídas', ecoClientes.filter(c => c.parado === 'sim'))}
+    ${modalListaClientes('modalEco_reativacao', 'E-commerce: Reativações Concluídas', ecoClientes.filter(c => c.parado === 'sim' && c.fechou === 'sim'))}
 
     ${modalListaClientes('modalInd_sem_visita', 'Indústria: Prospecção Sem Visita', indClientes.filter(c => c.prospeccao === 'sem_visita'))}
     ${modalListaClientes('modalInd_com_visita', 'Indústria: Prospecção Com Visita', indClientes.filter(c => c.prospeccao === 'com_visita'))}
@@ -495,7 +518,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     ${modalListaClientes('modalInd_vendas', 'Indústria: Vendas Fechadas', indClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalInd_pos_venda', 'Indústria: Pós-Venda Realizado', indClientes.filter(c => c.pos_venda === 'sim'))}
     ${modalListaClientes('modalInd_visita', 'Indústria: Visita na Carteira Realizada', indClientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
-    ${modalListaClientes('modalInd_reativacao', 'Indústria: Reativações Concluídas', indClientes.filter(c => c.parado === 'sim'))}
+    ${modalListaClientes('modalInd_reativacao', 'Indústria: Reativações Concluídas', indClientes.filter(c => c.parado === 'sim' && c.fechou === 'sim'))}
     ${modalListaClientes('modalInd_retencao', 'Indústria: Clientes Fidelizados (Recorrência)', indClientes.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim'))}
 
     <div class="modal fade" id="modalUsuario" tabindex="-1">
@@ -625,7 +648,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="modal-body p-4">
                         <input type="hidden" name="vendedor_id" value="${u.id}">
                         <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="50" height="50" class="rounded-circle border me-3 shadow-sm" style="object-fit: cover;">
+                            <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="50" height="50" class="rounded-circle border me-3 shadow-sm" style="object-fit: cover;">
                             <div>
                                 <h6 class="fw-bold text-dark mb-0">${u.nome}</h6>
                                 <span class="text-muted small text-uppercase">${u.setor}</span>
@@ -658,7 +681,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <tbody>
                             ${usuarios.map(u => `
                                 <tr>
-                                    <td class="ps-4"><img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border" style="object-fit: cover;"></td>
+                                    <td class="ps-4"><img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="40" height="40" class="rounded-circle border" style="object-fit: cover;"></td>
                                     <td class="fw-medium">${u.nome}</td>
                                     <td><span class="badge bg-${u.setor === 'ecommerce' ? 'primary' : (u.setor === 'industria' ? 'warning text-dark' : 'dark')}">${u.setor.toUpperCase()}</span></td>
                                     <td>${u.tipo}</td>
@@ -689,7 +712,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             
             const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
             const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
-            const kpiReativ = clientesU.filter(c => c.parado === 'sim').length;
+            const kpiReativ = clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim').length;
             const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.fechou === 'sim').length;
             
             const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
@@ -756,7 +779,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                         <div class="modal-content border-0 shadow-lg animate-modal">
                             <div class="modal-header bg-dark text-white border-0 d-flex align-items-center">
-                                <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
+                                <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
                                 <div>
                                     <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i> Conquistas de ${u.nome}</h5>
                                     <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos Totais</span>
