@@ -479,15 +479,12 @@ app.get('/admin/exportar-clientes', checarAuth, async (req, res) => {
 });
 
 // ==========================================
-// ROTA: ZERAR CICLO COMERCIAL
+// ROTA: ZERAR CICLO COMERCIAL E FATURAMENTO MANUAL
 // ==========================================
 app.post('/admin/zerar-ciclo', checarAuth, async (req, res) => {
   if (req.session.usuario.tipo !== 'admin') return res.redirect('/vendedor');
 
-  // 1. Arquiva todos os clientes atuais do painel
   await db.query('UPDATE clientes SET arquivado = 1');
-  
-  // 2. Zera a pontuação e O FATURAMENTO MANUAL acumulado dos vendedores
   await db.query('UPDATE usuarios SET pontuacao = 0, faturamento_manual = 0 WHERE tipo = "vendedor"');
 
   res.redirect('/admin');
@@ -708,7 +705,7 @@ app.get('/vendedor', checarAuth, async (req, res) => {
             SUM(IF(fechou = 'sim', valor_venda, 0)) AS valor_total_vendas, 
             SUM(IF(pos_venda = 'sim', 1, 0)) AS pos_venda,
             SUM(IF(carteira = 'sim' AND prospeccao = 'com_visita', 1, 0)) AS visitas_carteira,
-            SUM(IF(parado = 'sim', 1, 0)) AS reativacoes,
+            SUM(IF(parado = 'sim' AND fechou = 'sim', 1, 0)) AS reativacoes,
             SUM(IF(carteira = 'sim', 1, 0)) AS total_carteira,
             SUM(IF(carteira = 'sim' AND comprou_recorrente = 'sim', 1, 0)) AS total_fidelizados
         FROM clientes 
@@ -719,7 +716,9 @@ app.get('/vendedor', checarAuth, async (req, res) => {
     req.session.usuario = userAtualizado[0];
 
     const [usuarios] = await db.query('SELECT * FROM usuarios WHERE tipo = "vendedor" ORDER BY pontuacao DESC');
-    const [todosClientes] = await db.query('SELECT vendedor_id, valor_venda, fechou FROM clientes WHERE fechou = "sim" AND arquivado = 0');
+    
+    // CORREÇÃO AQUI: ANTES TRAZIA APENAS ALGUNS CAMPOS, AGORA TRAZ TODOS OS CLIENTES ATIVOS PARA MAPEAR OS MODAIS
+    const [todosClientes] = await db.query('SELECT * FROM clientes WHERE arquivado = 0');
 
     // INTEGRAÇÃO DO FATURAMENTO MANUAL
     const somaManualTotal = usuarios.reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);

@@ -70,7 +70,7 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
                                     <tr>
                                         <td class="ps-3 py-2 fw-medium text-dark">
                                             ${c.nome}
-                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> VIP</span>' : ''}
+                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> GRANDE</span>' : ''}
                                             ${c.observacao ? `<br><small class="text-muted"><i class="fa-solid fa-note-sticky me-1"></i>${c.observacao}</small>` : ''}
                                         </td>
                                         <td class="py-2 text-end pe-3 fw-bold text-success">${formatarBRL(c.valor_venda)}</td>
@@ -321,7 +321,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                     <tr class="cliente-row" data-nome="${c.nome.toLowerCase()}" data-pos="${c.pos_venda || ''}" data-rec="${c.comprou_recorrente || ''}">
                                         <td class="ps-4 fw-bold text-dark">
                                             ${c.nome}
-                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> VIP</span>' : ''}
+                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> GRANDE</span>' : ''}
                                             ${c.observacao ? `<br><small class="text-muted fw-normal" style="font-size: 0.75rem;"><i class="fa-solid fa-note-sticky text-warning me-1"></i>${c.observacao}</small>` : ''}
                                         </td>
                                         <td>${c.fechou === 'sim' ? '<span class="badge bg-success-subtle text-success border border-success-subtle">Fechado</span>' : '<span class="badge bg-light text-muted border">Pendente</span>'}</td>
@@ -409,7 +409,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                                             </div>
                                                             <div class="form-check mt-1">
                                                                 <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="grandeEdit${c.id}" ${c.cliente_grande === 'sim' ? 'checked' : ''}>
-                                                                <label class="form-check-label" for="grandeEdit${c.id}">Marcar como Cliente Grande VIP?</label>
+                                                                <label class="form-check-label" for="grandeEdit${c.id}">Cliente Grande?</label>
                                                             </div>
                                                         </div>
                                                         
@@ -464,7 +464,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
     ${modalListaClientes('modalKpi_vendas', 'Faturamento Individual Realizado', clientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalKpi_pos_venda', 'Pós-Venda Realizado', clientes.filter(c => c.pos_venda === 'sim'))}
     ${modalListaClientes('modalKpi_visita', 'Manutenção de Carteira (Visitas)', clientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
-    ${modalListaClientes('modalKpi_reativacao', 'Reativações de Clientes Inativos', clientes.filter(c => c.parado === 'sim'))}
+    ${modalListaClientes('modalKpi_reativacao', 'Reativações de Clientes Inativos', clientes.filter(c => c.parado === 'sim' && c.fechou === 'sim'))}
     ${modalListaClientes('modalKpi_retencao', 'Fidelização (Clientes Recompradores)', clientes.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim'))}
 
     <div class="modal fade" id="modalCliente" tabindex="-1">
@@ -520,7 +520,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="cliente_grande">
-                                <label class="form-check-label small" for="cliente_grande">Marcar como Cliente Grande VIP?</label>
+                                <label class="form-check-label small" for="cliente_grande">Cliente Grande?</label>
                             </div>
                         </div>
                         
@@ -550,7 +550,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
         
         const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
         const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
-        const kpiReativ = clientesU.filter(c => c.parado === 'sim').length;
+        const kpiReativ = clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim').length;
         const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.fechou === 'sim').length;
         
         const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
