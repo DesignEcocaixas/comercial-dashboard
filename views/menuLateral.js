@@ -17,7 +17,7 @@ module.exports = (usuario) => {
             <small class="text-muted fw-bold px-3 mt-3 mb-2 d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Ações</small>
             <a href="/admin/arquivados" class="nav-link text-dark mb-1"><i class="fa-solid fa-box-archive me-2 text-primary"></i> Arquivados</a>
             <a href="/admin/exportar" class="nav-link text-dark mb-1"><i class="fa-solid fa-file-excel me-2 text-primary"></i> Relatório Excel</a>
-            <a href="#" class="nav-link text-dark mb-1" data-bs-toggle="modal" data-bs-target="#modalZerarCiclo"><i class="fa-solid fa-rotate-right me-2 text-primary"></i> Zerar Ciclo</a>
+            <a href="#" class="nav-link text-dark mb-1" data-bs-toggle="modal" data-bs-target="#modalZerarCiclo"><i class="fa-solid fa-rotate-right me-2 text-primary"></i> Fechar mês</a>
         `;
     } else {
         links = `

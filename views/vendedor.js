@@ -70,7 +70,7 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
                                     <tr>
                                         <td class="ps-3 py-2 fw-medium text-dark">
                                             ${c.nome}
-                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> GRANDE</span>' : ''}
+                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> VIP</span>' : ''}
                                             ${c.observacao ? `<br><small class="text-muted"><i class="fa-solid fa-note-sticky me-1"></i>${c.observacao}</small>` : ''}
                                         </td>
                                         <td class="py-2 text-end pe-3 fw-bold text-success">${formatarBRL(c.valor_venda)}</td>
@@ -184,7 +184,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                 </thead>
                                 <tbody>
                                     ${[...usuarios].sort((a, b) => b.pontuacao - a.pontuacao).map((u, index) => `
-                                        <tr class="${u.id === usuario.id ? 'bg-light' : ''}">
+                                        <tr style="cursor: pointer; transition: 0.2s; ${u.id === usuario.id ? 'background-color: #f1f3f5; border-left: 3px solid #0d6efd;' : ''}" onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='${u.id === usuario.id ? '#f1f3f5' : 'transparent'}'" data-bs-toggle="modal" data-bs-target="#modalPontosUsuario${u.id}" title="Ver Conquistas">
                                             <td class="ps-3 py-2">
                                                 <div class="d-flex align-items-center">
                                                     <div class="position-relative me-2">
@@ -321,7 +321,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                     <tr class="cliente-row" data-nome="${c.nome.toLowerCase()}" data-pos="${c.pos_venda || ''}" data-rec="${c.comprou_recorrente || ''}">
                                         <td class="ps-4 fw-bold text-dark">
                                             ${c.nome}
-                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> GRANDE</span>' : ''}
+                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> VIP</span>' : ''}
                                             ${c.observacao ? `<br><small class="text-muted fw-normal" style="font-size: 0.75rem;"><i class="fa-solid fa-note-sticky text-warning me-1"></i>${c.observacao}</small>` : ''}
                                         </td>
                                         <td>${c.fechou === 'sim' ? '<span class="badge bg-success-subtle text-success border border-success-subtle">Fechado</span>' : '<span class="badge bg-light text-muted border">Pendente</span>'}</td>
@@ -409,7 +409,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                                             </div>
                                                             <div class="form-check mt-1">
                                                                 <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="grandeEdit${c.id}" ${c.cliente_grande === 'sim' ? 'checked' : ''}>
-                                                                <label class="form-check-label" for="grandeEdit${c.id}">Cliente Grande?</label>
+                                                                <label class="form-check-label" for="grandeEdit${c.id}">Marcar como Cliente Grande VIP?</label>
                                                             </div>
                                                         </div>
                                                         
@@ -520,7 +520,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="cliente_grande">
-                                <label class="form-check-label small" for="cliente_grande">Cliente Grande?</label>
+                                <label class="form-check-label small" for="cliente_grande">Marcar como Cliente Grande VIP?</label>
                             </div>
                         </div>
                         
@@ -538,6 +538,121 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             </div>
         </div>
     </div>
+
+    ${usuarios.filter(u => u.tipo === 'vendedor').map(u => {
+        const clientesU = todosClientes.filter(c => c.vendedor_id === u.id);
+        const kpiSem = clientesU.filter(c => c.prospeccao === 'sem_visita').length;
+        const kpiCom = clientesU.filter(c => c.prospeccao === 'com_visita').length;
+        const kpiNovos = clientesU.filter(c => c.fechou === 'sim').length;
+        
+        const valorMinGrande = u.valor_cliente_grande > 0 ? u.valor_cliente_grande : (u.setor === 'ecommerce' ? 5000 : 15000);
+        const kpiGrande = clientesU.filter(c => c.fechou === 'sim' && (c.valor_venda >= valorMinGrande || c.cliente_grande === 'sim')).length;
+        
+        const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
+        const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
+        const kpiReativ = clientesU.filter(c => c.parado === 'sim').length;
+        const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.fechou === 'sim').length;
+        
+        const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
+        const kpiFidel = clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim').length;
+        const taxaInd = kpiCarteira > 0 ? (kpiFidel / kpiCarteira) * 100 : 0;
+
+        // Fallbacks caso não exista meta individual (uso os valores padrão iniciais de metas do setor)
+        const defMeta = u.setor === 'ecommerce' 
+            ? { sem: 8, com: 8, novos: 3, grande: 3, pos: 3, visita: 4, reativ: 1, outras: 1, taxa: 0 }
+            : { sem: 1, com: 4, novos: 1, grande: 1, pos: 1, visita: 2, reativ: 1, outras: 0, taxa: 40 };
+
+        const m_sem = u.qtd_prosp_sem_visita > 0 ? u.qtd_prosp_sem_visita : defMeta.sem;
+        const m_com = u.qtd_prosp_com_visita > 0 ? u.qtd_prosp_com_visita : defMeta.com;
+        const m_novos = u.qtd_clientes_fechar > 0 ? u.qtd_clientes_fechar : defMeta.novos;
+        const m_grande = u.qtd_cliente_grande > 0 ? u.qtd_cliente_grande : defMeta.grande;
+        const m_pos = u.qtd_pos_venda > 0 ? u.qtd_pos_venda : defMeta.pos;
+        const m_visita = u.qtd_visitas_carteira > 0 ? u.qtd_visitas_carteira : defMeta.visita;
+        const m_reativ = u.qtd_reativacoes > 0 ? u.qtd_reativacoes : defMeta.reativ;
+        const m_outras = u.qtd_vendas_outras_regioes > 0 ? u.qtd_vendas_outras_regioes : defMeta.outras;
+        const m_taxa = u.taxa_retencao > 0 ? u.taxa_retencao : defMeta.taxa;
+
+        const vAlcancadoGlobal = Number(alcancadoGlobal) || 0; // faturamento_manual já vem incluso de app.js
+        const vMetaGlobal = Number(metaGlobal) || 0;
+        const globalHit = (vMetaGlobal > 0 && vAlcancadoGlobal >= vMetaGlobal);
+
+        const achievementCard = (titulo, atual, meta, pontos, icone, type = 'number') => {
+            let hit = false;
+            let progresso = '';
+            if (type === 'global') {
+                hit = globalHit;
+                progresso = hit ? 'Meta Batida!' : 'Aguardando Equipe';
+            } else if (type === 'percent') {
+                hit = atual >= meta && meta > 0;
+                progresso = `${atual.toFixed(1)}% / ${meta}%`;
+            } else {
+                hit = atual >= meta && meta > 0;
+                progresso = `${atual} / ${meta}`;
+            }
+
+            const bgClass = hit ? 'bg-success-subtle border-success' : 'bg-light border-secondary-subtle';
+            const textClass = hit ? 'text-success' : 'text-muted';
+            const iconColor = hit ? 'text-success' : 'text-secondary';
+            const pointBadge = hit ? `<span class="badge bg-success shadow-sm">+${pontos} pts</span>` : `<span class="badge bg-secondary shadow-sm opacity-50">+${pontos} pts</span>`;
+            const checkIcon = hit ? '<i class="fa-solid fa-circle-check ms-1 text-success"></i>' : '';
+
+            return `
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border ${bgClass} shadow-sm" style="transition: 0.3s;">
+                        <div class="card-body p-3 d-flex align-items-center">
+                            <div class="rounded-circle bg-white d-flex align-items-center justify-content-center border shadow-sm me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
+                                <i class="fa-solid ${icone} ${iconColor} fs-5"></i>
+                            </div>
+                            <div class="flex-grow-1">
+                                <h6 class="mb-1 fw-bold ${textClass}" style="font-size: 0.8rem;">${titulo} ${checkIcon}</h6>
+                                <div class="small ${hit ? 'text-dark fw-medium' : 'text-muted'}" style="font-size: 0.75rem;">${progresso}</div>
+                            </div>
+                            <div class="ms-2">
+                                ${pointBadge}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        };
+
+        return `
+            <div class="modal fade" id="modalPontosUsuario${u.id}" tabindex="-1">
+                <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+                    <div class="modal-content border-0 shadow-lg animate-modal">
+                        <div class="modal-header bg-dark text-white border-0 d-flex align-items-center">
+                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
+                            <div>
+                                <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i> Conquistas de ${u.nome}</h5>
+                                <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos Totais</span>
+                            </div>
+                            <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body p-4 bg-light-subtle">
+                            <h6 class="fw-bold text-muted mb-3 text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px;">Metas Alcançadas</h6>
+                            <div class="row">
+                                ${achievementCard('Meta Global Equipe', 0, 0, 30, 'fa-earth-americas', 'global')}
+                                ${achievementCard('Prosp. Sem Visita', kpiSem, m_sem, 10, 'fa-phone')}
+                                ${achievementCard('Prosp. Com Visita', kpiCom, m_com, 30, 'fa-handshake')}
+                                ${achievementCard('Novos Clientes', kpiNovos, m_novos, 30, 'fa-user-check')}
+                                ${achievementCard('Cliente Grande', kpiGrande, m_grande, 20, 'fa-gem')}
+                                ${achievementCard('Pós-Venda', kpiPos, m_pos, 20, 'fa-headset')}
+                                ${achievementCard('Visitas Carteira', kpiVisita, m_visita, 20, 'fa-car')}
+                                ${achievementCard('Reativações', kpiReativ, m_reativ, 20, 'fa-rotate-right')}
+                                ${u.setor === 'ecommerce' 
+                                    ? achievementCard('Vendas Outras Regiões', kpiOutrasRegioes, m_outras, 20, 'fa-map-location-dot')
+                                    : achievementCard('Taxa de Retenção', taxaInd, m_taxa, 20, 'fa-chart-pie', 'percent')
+                                }
+                            </div>
+                        </div>
+                        <div class="modal-footer border-0 bg-light">
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('')}
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {

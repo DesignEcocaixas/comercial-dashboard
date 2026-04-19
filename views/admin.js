@@ -919,7 +919,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             <div class="modal-content border-0 shadow-lg">
                 <form action="/admin/zerar-ciclo" method="POST">
                     <div class="modal-header bg-danger text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Zerar Ciclo Comercial</h5>
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Fechar mês</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4 text-center">
@@ -930,7 +930,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     </div>
                     <div class="modal-footer border-0 justify-content-center bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger fw-bold px-4">Sim, Zerar Tudo</button>
+                        <button type="submit" class="btn btn-danger fw-bold px-4">Fechar mês</button>
                     </div>
                 </form>
             </div>
