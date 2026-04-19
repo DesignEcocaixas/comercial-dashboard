@@ -1,10 +1,11 @@
 const layout = require('./layout');
+const menuLateral = require('./menuLateral');
+const loading = require('./loading');
 
 const formatarBRL = (valor) => {
     return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 };
 
-// Função para preencher o valor do input tipo 'date' (YYYY-MM-DD)
 const formatarDataInput = (dataStr) => {
     if (!dataStr) return '';
     const d = new Date(dataStr);
@@ -69,6 +70,7 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
                                     <tr>
                                         <td class="ps-3 py-2 fw-medium text-dark">
                                             ${c.nome}
+                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> GRANDE</span>' : ''}
                                             ${c.observacao ? `<br><small class="text-muted"><i class="fa-solid fa-note-sticky me-1"></i>${c.observacao}</small>` : ''}
                                         </td>
                                         <td class="py-2 text-end pe-3 fw-bold text-success">${formatarBRL(c.valor_venda)}</td>
@@ -94,18 +96,20 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
 
     return layout(`
     
+    ${loading()}
+    ${menuLateral(usuario)}
+
     <style>
         .main-container {
             width: 85%;
             margin: 0 auto;
             font-size: 0.95rem;
-            padding-top: 1rem;
+            padding-top: 2rem;
         }
         @media (max-width: 768px) {
             .main-container { width: 98%; padding-top: 0.5rem; }
             .kpi-card h6 { font-size: 0.7rem !important; }
             .kpi-card span { font-size: 0.9rem !important; }
-            .header-actions { justify-content: center; width: 100%; }
         }
         
         .animate-up { animation: fadeInUp 0.5s ease backwards; }
@@ -119,367 +123,344 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             from { opacity: 0; transform: scale(0.9); }
             to { opacity: 1; transform: scale(1); }
         }
-        .header-actions { flex-wrap: wrap; }
     </style>
 
-    <div class="main-container">
+    <div class="main-content-wrapper">
+        <div class="main-container">
 
-        <header class="d-flex flex-column flex-md-row justify-content-between align-items-center bg-white p-3 shadow-sm rounded border mb-3 gap-3 animate-up">
-            <div class="d-flex align-items-center">
-                <img src="${usuario.foto || 'https://via.placeholder.com/50'}" width="90" height="90" class="rounded-circle border border-2 me-3" style="object-fit: cover;">
-                <div>
-                    <h6 class="mb-0 fw-bold text-dark" style="font-size: 1rem;">${usuario.nome}</h6>
-                    <span class="text-muted small"><i class="fa-solid ${usuario.setor === 'ecommerce' ? 'fa-cart-shopping' : 'fa-industry'} me-1 text-primary"></i> Vendedor ${usuario.setor.toUpperCase()}</span>
-                </div>
-            </div>
-            
-            <div class="d-flex align-items-center gap-2 header-actions">
-                <button class="btn btn-sm btn-primary py-1 px-3 fw-bold shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCliente">
-                    <i class="fa-solid fa-plus-circle me-1"></i> REGISTRAR CLIENTE
-                </button>
+            <div class="row mb-4 align-items-stretch">
                 
-                <div class="bg-light px-3 py-1 rounded border d-flex align-items-center gap-2">
-                    <span class="text-muted text-uppercase fw-bold" style="font-size: 0.7rem; letter-spacing: 1px;">PONTOS</span>
-                    <strong class="text-success" style="font-size: 1.1rem;"><i class="fa-solid fa-star text-warning me-1"></i> ${usuario.pontuacao}</strong>
-                </div>
-                
-                <div class="vr mx-1 d-none d-md-block"></div>
-                
-                <a href="/vendedor/arquivados" class="btn btn-sm btn-outline-secondary py-1 px-3 fw-bold shadow-sm" title="Ver Meses Anteriores"><i class="fa-solid fa-box-archive me-1"></i> Clientes arquivados</a>
-                
-                <a href="/logout" class="btn btn-sm btn-outline-danger py-1 px-3" title="Sair"><i class="fa-solid fa-power-off"></i></a>
-            </div>
-        </header>
+                ${(() => {
+                    const vAlcancado = Number(alcancadoGlobal) || 0;
+                    const vMeta = Number(metaGlobal) || 0;
+                    const corGlobal = (vAlcancado >= vMeta && vMeta > 0) ? 'success' : 'primary';
+                    const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
+                    
+                    const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
+                    const mesNome = mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1);
 
-        <div class="row mb-4 align-items-stretch">
-            
-            ${(() => {
-                const vAlcancado = Number(alcancadoGlobal) || 0;
-                const vMeta = Number(metaGlobal) || 0;
-                const corGlobal = (vAlcancado >= vMeta && vMeta > 0) ? 'success' : 'primary';
-                const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
-                
-                // Descobre o mês atual e deixa a primeira letra maiúscula
-                const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
-                const mesNome = mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1);
-
-                return `
-                <div class="col-lg-4 col-md-12 mb-3 mb-lg-0 d-flex animate-up" style="animation-delay: 0.1s;">
-                    <div class="card shadow-sm border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative">
-                        
-                        <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
-                        
-                        <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
-                            <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
+                    return `
+                    <div class="col-lg-4 col-md-12 mb-3 mb-lg-0 d-flex animate-up" style="animation-delay: 0.1s;">
+                        <div class="card shadow-sm border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative">
                             
-                            <div class="progress mb-3" style="height: 18px; border-radius: 20px; border: 1px solid #e0e0e0; overflow: hidden;">
-                                <div class="progress-bar bg-${corGlobal} progress-bar-striped progress-bar-animated" 
-                                     role="progressbar" 
-                                     style="width: ${porcentagem}%; font-size: 0.75rem; font-weight: bold;">
-                                     ${porcentagem.toFixed(1)}%
-                                </div>
-                            </div>
+                            <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                             
-                            <div class="d-flex justify-content-between align-items-center mt-2 px-2">
-                                <div class="text-start">
-                                    <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Alcançado</span>
-                                    <strong class="text-${corGlobal}" style="font-size: 1rem;">${formatarBRL(vAlcancado)}</strong>
+                            <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
+                                <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
+                                
+                                <div class="progress mb-3" style="height: 18px; border-radius: 20px; border: 1px solid #e0e0e0; overflow: hidden;">
+                                    <div class="progress-bar bg-${corGlobal} progress-bar-striped progress-bar-animated" 
+                                         role="progressbar" 
+                                         style="width: ${porcentagem}%; font-size: 0.75rem; font-weight: bold;">
+                                         ${porcentagem.toFixed(1)}%
+                                    </div>
                                 </div>
-                                <div class="text-end">
-                                    <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Meta</span>
-                                    <strong class="text-dark" style="font-size: 1rem;">${formatarBRL(vMeta)}</strong>
+                                
+                                <div class="d-flex justify-content-between align-items-center mt-2 px-2">
+                                    <div class="text-start">
+                                        <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Alcançado</span>
+                                        <strong class="text-${corGlobal}" style="font-size: 1rem;">${formatarBRL(vAlcancado)}</strong>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Meta</span>
+                                        <strong class="text-dark" style="font-size: 1rem;">${formatarBRL(vMeta)}</strong>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
-                `;
-            })()}
+                    `;
+                })()}
 
-            <div class="col-lg-4 col-md-6 mb-3 mb-md-0 d-flex animate-up" style="animation-delay: 0.2s;">
-                <div class="card shadow-sm rounded-3 border w-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <span class="fw-bold" style="font-size: 0.9rem;"><i class="fa-solid fa-trophy text-warning me-2"></i> Rank de Performance</span>
+                <div class="col-lg-4 col-md-6 mb-3 mb-md-0 d-flex animate-up" style="animation-delay: 0.2s;">
+                    <div class="card shadow-sm rounded-3 border w-100">
+                        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold" style="font-size: 0.9rem;"><i class="fa-solid fa-trophy text-warning me-2"></i> Rank de Performance</span>
+                        </div>
+                        <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light" style="font-size: 0.75rem;">
+                                    <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Pontos</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${[...usuarios].sort((a, b) => b.pontuacao - a.pontuacao).map((u, index) => `
+                                        <tr class="${u.id === usuario.id ? 'bg-light' : ''}">
+                                            <td class="ps-3 py-2">
+                                                <div class="d-flex align-items-center">
+                                                    <div class="position-relative me-2">
+                                                        <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
+                                                        ${index === 0 ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.55rem;"><i class="fa-solid fa-crown"></i></span>' : ''}
+                                                    </div>
+                                                    <div class="d-flex flex-column">
+                                                        <span class="fw-bold ${u.id === usuario.id ? 'text-primary' : 'text-dark'}" style="font-size: 0.85rem;">${u.nome}</span>
+                                                        <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">${u.setor}</span>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td class="text-end pe-3 py-2"><strong class="text-success"><i class="fa-solid fa-star text-warning small me-1"></i> ${u.pontuacao}</strong></td>
+                                        </tr>
+                                    `).join('')}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
-                    <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
+                </div>
+
+                <div class="col-lg-4 col-md-6 d-flex animate-up" style="animation-delay: 0.3s;">
+                    <div class="card shadow-sm rounded-3 border w-100">
+                        <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
+                            <span class="fw-bold" style="font-size: 0.9rem;"><i class="fa-solid fa-sack-dollar text-success me-2"></i> Rank de Vendas (R$)</span>
+                        </div>
+                        <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="bg-light" style="font-size: 0.75rem;">
+                                    <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Faturamento</th></tr>
+                                </thead>
+                                <tbody>
+                                    ${(() => {
+                                        const vendedores = usuarios.filter(u => u.tipo === 'vendedor');
+                                        const rankingFaturamento = vendedores.map(v => {
+                                            const vendasDoVendedor = todosClientes.filter(c => c.vendedor_id === v.id && c.fechou === 'sim');
+                                            const totalVendido = vendasDoVendedor.reduce((acc, curr) => acc + Number(curr.valor_venda), 0) + Number(v.faturamento_manual || 0);
+                                            return { ...v, totalVendido };
+                                        });
+
+                                        rankingFaturamento.sort((a, b) => b.totalVendido - a.totalVendido);
+
+                                        return rankingFaturamento.map((u, index) => `
+                                            <tr class="${u.id === usuario.id ? 'bg-light' : ''}">
+                                                <td class="ps-3 py-2">
+                                                    <div class="d-flex align-items-center">
+                                                        <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
+                                                        <span class="fw-bold ${u.id === usuario.id ? 'text-primary' : 'text-dark'}" style="font-size: 0.85rem;">${u.nome}</span>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end pe-3 py-2">
+                                                    <strong class="text-success" style="font-size: 0.9rem;">${formatarBRL(u.totalVendido)}</strong>
+                                                </td>
+                                            </tr>
+                                        `).join('');
+                                    })()}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="card shadow-sm mb-4 animate-up" style="animation-delay: 0.4s;">
+                <div class="card-header bg-white py-3 border-0"><i class="fa-solid fa-gauge-high text-primary me-2"></i> <span class="fw-bold">Meus Indicadores de Performance</span></div>
+                <div class="card-body bg-light-subtle pb-0 px-3 pt-4">
+                    <div class="row">
+                        ${kpiCard('Prosp. Sem Visita', kpis.prosp_sem_visita, metas.qtd_prosp_sem_visita, 'fa-phone', false, 'modalKpi_sem_visita')}
+                        ${kpiCard('Prosp. Com Visita', kpis.prosp_com_visita, metas.qtd_prosp_com_visita, 'fa-handshake', false, 'modalKpi_com_visita')}
+                        ${kpiCard('Novos Clientes', kpis.clientes_fechar, metas.qtd_clientes_fechar, 'fa-user-check', false, 'modalKpi_fechar')}
+                        ${kpiCard('Cliente Grande', kpis.qtd_cliente_grande, metas.qtd_cliente_grande, 'fa-gem', false, 'modalKpi_grande')}
+                        
+                        ${kpiCard('Minha Meta', kpis.valor_total_vendas, metas.meta_geral, 'fa-sack-dollar', true, 'modalKpi_vendas')}
+                        
+                        ${kpiCard('Pós-Venda Feito', kpis.pos_venda, metas.qtd_pos_venda, 'fa-headset', false, 'modalKpi_pos_venda')}
+                        ${kpiCard('Visitas Carteira', kpis.visitas_carteira, metas.qtd_visitas_carteira, 'fa-car', false, 'modalKpi_visita')}
+                        ${kpiCard('Reativações', kpis.reativacoes, metas.qtd_reativacoes, 'fa-rotate-right', false, 'modalKpi_reativacao')}
+
+                        ${usuario.setor === 'industria' ? kpiCard('Taxa Retenção', taxaRetencaoAlcancada, metas.taxa_retencao || 40, 'fa-chart-pie', false, 'modalKpi_retencao', true) : ''}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mb-5 animate-up" style="animation-delay: 0.5s;">
+                
+                <div class="card-header bg-white py-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="d-flex align-items-center w-100">
+                        <i class="fa-solid fa-address-book text-secondary me-2"></i> <span class="fw-bold">Gestão Ativa da Carteira</span>
+                        ${usuario.setor === 'industria' ? '<span class="badge bg-warning text-dark small fw-bold ms-2">FIDELIZAÇÃO: META 40%</span>' : ''}
+                    </div>
+                    
+                    <div class="d-flex flex-wrap flex-md-nowrap gap-2 w-100 justify-content-md-end">
+                        <div class="input-group input-group-sm" style="min-width: 180px; max-width: 250px;">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+                            <input type="text" id="filtroTexto" class="form-control border-start-0 ps-0" placeholder="Buscar cliente...">
+                        </div>
+                        <select id="filtroPosVenda" class="form-select form-select-sm w-auto">
+                            <option value="">Pós-Venda: Todos</option>
+                            <option value="sim">Feito</option>
+                            <option value="pendente">Pendente</option>
+                            <option value="nao">Não Realizado</option>
+                        </select>
+                        <select id="filtroRecorrencia" class="form-select form-select-sm w-auto">
+                            <option value="">Recorrência: Todas</option>
+                            <option value="sim">Comprou</option>
+                            <option value="nao">Inativo</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0 overflow-auto">
+                    <div class="table-responsive" style="min-height: 400px;">
                         <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light" style="font-size: 0.75rem;">
-                                <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Pontos</th></tr>
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3 text-muted small uppercase">Cliente</th>
+                                    <th class="py-3 text-muted small uppercase">Status</th>
+                                    <th class="py-3 text-muted small uppercase">Valor</th>
+                                    <th class="py-3 text-muted small uppercase">Pós-Venda</th>
+                                    <th class="py-3 text-muted small uppercase">Recorrência</th>
+                                    <th class="text-end pe-4 py-3 text-muted small uppercase">Ações</th> 
+                                </tr>
                             </thead>
-                            <tbody>
-                                ${[...usuarios].sort((a, b) => b.pontuacao - a.pontuacao).map((u, index) => `
-                                    <tr class="${u.id === usuario.id ? 'bg-light' : ''}">
-                                        <td class="ps-3 py-2">
-                                            <div class="d-flex align-items-center">
-                                                <div class="position-relative me-2">
-                                                    <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
-                                                    ${index === 0 ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.55rem;"><i class="fa-solid fa-crown"></i></span>' : ''}
-                                                </div>
-                                                <div class="d-flex flex-column">
-                                                    <span class="fw-bold ${u.id === usuario.id ? 'text-primary' : 'text-dark'}" style="font-size: 0.85rem;">${u.nome}</span>
-                                                    <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">${u.setor}</span>
-                                                </div>
-                                            </div>
+                            <tbody id="tabelaClientesBody">
+                                <tr id="linhaVazia" style="display: none;">
+                                    <td colspan="6" class="text-center text-muted py-5">
+                                        <i class="fa-solid fa-folder-open fa-2x mb-2 text-light-subtle"></i><br>
+                                        Nenhum cliente corresponde aos filtros aplicados.
+                                    </td>
+                                </tr>
+                                
+                                ${clientes.map(c => `
+                                    <tr class="cliente-row" data-nome="${c.nome.toLowerCase()}" data-pos="${c.pos_venda || ''}" data-rec="${c.comprou_recorrente || ''}">
+                                        <td class="ps-4 fw-bold text-dark">
+                                            ${c.nome}
+                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> GRANDE</span>' : ''}
+                                            ${c.observacao ? `<br><small class="text-muted fw-normal" style="font-size: 0.75rem;"><i class="fa-solid fa-note-sticky text-warning me-1"></i>${c.observacao}</small>` : ''}
                                         </td>
-                                        <td class="text-end pe-3 py-2"><strong class="text-success"><i class="fa-solid fa-star text-warning small me-1"></i> ${u.pontuacao}</strong></td>
+                                        <td>${c.fechou === 'sim' ? '<span class="badge bg-success-subtle text-success border border-success-subtle">Fechado</span>' : '<span class="badge bg-light text-muted border">Pendente</span>'}</td>
+                                        <td class="fw-medium">${formatarBRL(c.valor_venda)}</td> 
+                                        <td>
+                                            ${c.fechou === 'sim' ? `
+                                            <form action="/vendedor/posvenda" method="POST" class="d-inline">
+                                                <input type="hidden" name="id" value="${c.id}">
+                                                <select name="pos_venda" class="form-select form-select-sm d-inline w-auto bg-light-subtle border-0 py-1" onchange="this.form.submit()">
+                                                    <option value="pendente" ${c.pos_venda === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
+                                                    <option value="sim" ${c.pos_venda === 'sim' ? 'selected' : ''}>✅ Feito</option>
+                                                    <option value="nao" ${c.pos_venda === 'nao' ? 'selected' : ''}>❌ Não</option>
+                                                </select>
+                                            </form>
+                                            ` : '<span class="text-muted small">-</span>'}
+                                        </td>
+                                        
+                                        <td>
+                                            ${c.carteira === 'sim' ? `
+                                            <form action="/vendedor/recorrencia" method="POST" class="d-inline">
+                                                <input type="hidden" name="id" value="${c.id}">
+                                                <select name="comprou_recorrente" class="form-select form-select-sm d-inline w-auto bg-light-subtle border-0 py-1" onchange="this.form.submit()">
+                                                    <option value="nao" ${c.comprou_recorrente === 'nao' ? 'selected' : ''}>❌ Inativo</option>
+                                                    <option value="sim" ${c.comprou_recorrente === 'sim' ? 'selected' : ''}>🛒 Comprou</option>
+                                                </select>
+                                            </form>
+                                            ` : '<span class="text-muted small">Prospecção</span>'}
+                                        </td>
+
+                                        <td class="text-end pe-4">
+                                            <button class="btn btn-sm btn-light text-primary border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEditar${c.id}" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
+                                            <button class="btn btn-sm btn-light text-danger border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExcluir${c.id}" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
+                                        </td>
                                     </tr>
+
+                                    <div class="modal fade" id="modalEditar${c.id}" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow-lg animate-modal">
+                                                <form action="/vendedor/cliente/editar" method="POST">
+                                                    <div class="modal-header bg-warning border-0"><h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-edit me-2"></i> Ajustar Registro</h5></div>
+                                                    <div class="modal-body p-4">
+                                                        <input type="hidden" name="id" value="${c.id}">
+                                                        <label class="form-label small text-muted">Nome do Cliente</label>
+                                                        <input type="text" name="nome" class="form-control mb-3" value="${c.nome}" required>
+                                                        
+                                                        <div class="row">
+                                                            <div class="col-6">
+                                                                <label class="form-label small text-muted">Origem</label>
+                                                                <select name="prospeccao" class="form-select mb-3">
+                                                                    <option value="com_visita" ${c.prospeccao === 'com_visita' ? 'selected' : ''}>Com Visita</option>
+                                                                    <option value="sem_visita" ${c.prospeccao === 'sem_visita' ? 'selected' : ''}>Sem Visita</option>
+                                                                </select>
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small text-muted">Status</label>
+                                                                <select name="fechou" class="form-select mb-3">
+                                                                    <option value="sim" ${c.fechou === 'sim' ? 'selected' : ''}>Fechado</option>
+                                                                    <option value="nao" ${c.fechou === 'nao' ? 'selected' : ''}>Pendente</option>
+                                                                </select>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <div class="row mb-3">
+                                                            <div class="col-6">
+                                                                <label class="form-label small text-muted mb-0">Data Prospecção</label>
+                                                                <input type="date" name="data_prospeccao" class="form-control form-control-sm text-muted" value="${formatarDataInput(c.data_prospeccao)}">
+                                                            </div>
+                                                            <div class="col-6">
+                                                                <label class="form-label small text-muted mb-0">Data Fechamento</label>
+                                                                <input type="date" name="data_fechamento" class="form-control form-control-sm text-muted" value="${formatarDataInput(c.data_fechamento)}">
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <label class="form-label small text-muted">Valor da Venda (R$)</label>
+                                                        <input type="number" step="0.01" name="valor_venda" class="form-control mb-3 fw-bold text-success" value="${c.valor_venda}" required>
+                                                        
+                                                        <div class="bg-light p-3 rounded mb-3">
+                                                            <div class="form-check">
+                                                                <input class="form-check-input" type="checkbox" name="carteira" value="sim" id="cartEdit${c.id}" ${c.carteira === 'sim' ? 'checked' : ''}>
+                                                                <label class="form-check-label" for="cartEdit${c.id}">Cliente da Base (Carteira)</label>
+                                                            </div>
+                                                            <div class="form-check mt-1">
+                                                                <input class="form-check-input" type="checkbox" name="parado" value="sim" id="parEdit${c.id}" ${c.parado === 'sim' ? 'checked' : ''}>
+                                                                <label class="form-check-label" for="parEdit${c.id}">Reativação de Inativo</label>
+                                                            </div>
+                                                            <div class="form-check mt-1">
+                                                                <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="grandeEdit${c.id}" ${c.cliente_grande === 'sim' ? 'checked' : ''}>
+                                                                <label class="form-check-label" for="grandeEdit${c.id}">Cliente Grande?</label>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <label class="form-label small text-muted">Região Estratégica</label>
+                                                        <input type="text" name="regiao" class="form-control mb-3" value="${c.regiao || ''}">
+
+                                                        <label class="form-label small text-muted">Observações (Opcional)</label>
+                                                        <textarea name="observacao" class="form-control" rows="2" placeholder="Anotações extras...">${c.observacao || ''}</textarea>
+                                                    </div>
+                                                    <div class="modal-footer border-0">
+                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">CANCELAR</button>
+                                                        <button type="submit" class="btn btn-warning fw-bold px-4">SALVAR MUDANÇAS</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="modal fade" id="modalExcluir${c.id}" tabindex="-1">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content border-0 shadow animate-modal">
+                                                <form action="/vendedor/cliente/excluir" method="POST">
+                                                    <div class="modal-header bg-danger text-white border-0"><h5 class="modal-title fw-bold"><i class="fa-solid fa-trash-can me-2"></i> REMOVER REGISTRO</h5></div>
+                                                    <div class="modal-body p-4 text-center">
+                                                        <input type="hidden" name="id" value="${c.id}">
+                                                        <p>Excluir o cliente <strong>${c.nome}</strong>?</p>
+                                                        <small class="text-danger fw-bold">Isso afetará sua pontuação imediatamente.</small>
+                                                    </div>
+                                                    <div class="modal-footer border-0 justify-content-center">
+                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">NÃO, VOLTAR</button>
+                                                        <button type="submit" class="btn btn-danger px-5 fw-bold">SIM, EXCLUIR</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
                                 `).join('')}
                             </tbody>
                         </table>
                     </div>
-                </div>
-            </div>
-
-            <div class="col-lg-4 col-md-6 d-flex animate-up" style="animation-delay: 0.3s;">
-                <div class="card shadow-sm rounded-3 border w-100">
-                    <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <span class="fw-bold" style="font-size: 0.9rem;"><i class="fa-solid fa-sack-dollar text-success me-2"></i> Rank de Vendas (R$)</span>
-                    </div>
-                    <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
-                        <table class="table table-hover align-middle mb-0">
-                            <thead class="bg-light" style="font-size: 0.75rem;">
-                                <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Faturamento</th></tr>
-                            </thead>
-                            <tbody>
-                                ${(() => {
-                                    const vendedores = usuarios.filter(u => u.tipo === 'vendedor');
-                                    const rankingFaturamento = vendedores.map(v => {
-                                        const vendasDoVendedor = todosClientes.filter(c => c.vendedor_id === v.id && c.fechou === 'sim');
-                                        // CORREÇÃO: Adicionado a soma do faturamento_manual
-                                        const totalVendido = vendasDoVendedor.reduce((acc, curr) => acc + Number(curr.valor_venda), 0) + Number(v.faturamento_manual || 0);
-                                        return { ...v, totalVendido };
-                                    });
-
-                                    rankingFaturamento.sort((a, b) => b.totalVendido - a.totalVendido);
-
-                                    return rankingFaturamento.map((u, index) => `
-                                        <tr class="${u.id === usuario.id ? 'bg-light' : ''}">
-                                            <td class="ps-3 py-2">
-                                                <div class="d-flex align-items-center">
-                                                    <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
-                                                    <span class="fw-bold ${u.id === usuario.id ? 'text-primary' : 'text-dark'}" style="font-size: 0.85rem;">${u.nome}</span>
-                                                </div>
-                                            </td>
-                                            <td class="text-end pe-3 py-2">
-                                                <strong class="text-success" style="font-size: 0.9rem;">${formatarBRL(u.totalVendido)}</strong>
-                                            </td>
-                                        </tr>
-                                    `).join('');
-                                })()}
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-
-        <div class="card shadow-sm mb-4 animate-up" style="animation-delay: 0.4s;">
-            <div class="card-header bg-white py-3 border-0"><i class="fa-solid fa-gauge-high text-primary me-2"></i> <span class="fw-bold">Meus Indicadores de Performance</span></div>
-            <div class="card-body bg-light-subtle pb-0 px-3 pt-4">
-                <div class="row">
-                    ${kpiCard('Prosp. Sem Visita', kpis.prosp_sem_visita, metas.qtd_prosp_sem_visita, 'fa-phone', false, 'modalKpi_sem_visita')}
-                    ${kpiCard('Prosp. Com Visita', kpis.prosp_com_visita, metas.qtd_prosp_com_visita, 'fa-handshake', false, 'modalKpi_com_visita')}
-                    ${kpiCard('Novos Clientes', kpis.clientes_fechar, metas.qtd_clientes_fechar, 'fa-user-check', false, 'modalKpi_fechar')}
-                    ${kpiCard('Cliente Grande', kpis.qtd_cliente_grande, metas.qtd_cliente_grande, 'fa-gem', false, 'modalKpi_grande')}
-                    
-                    ${kpiCard('Minha Meta', kpis.valor_total_vendas, metas.meta_geral, 'fa-sack-dollar', true, 'modalKpi_vendas')}
-                    
-                    ${kpiCard('Pós-Venda Feito', kpis.pos_venda, metas.qtd_pos_venda, 'fa-headset', false, 'modalKpi_pos_venda')}
-                    ${kpiCard('Visitas Carteira', kpis.visitas_carteira, metas.qtd_visitas_carteira, 'fa-car', false, 'modalKpi_visita')}
-                    ${kpiCard('Reativações', kpis.reativacoes, metas.qtd_reativacoes, 'fa-rotate-right', false, 'modalKpi_reativacao')}
-
-                    ${usuario.setor === 'industria' ? kpiCard('Taxa Retenção', taxaRetencaoAlcancada, metas.taxa_retencao || 40, 'fa-chart-pie', false, 'modalKpi_retencao', true) : ''}
-                </div>
-            </div>
-        </div>
-
-        <div class="card shadow-sm mb-5 animate-up" style="animation-delay: 0.5s;">
-            
-            <div class="card-header bg-white py-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
-                <div class="d-flex align-items-center w-100">
-                    <i class="fa-solid fa-address-book text-secondary me-2"></i> <span class="fw-bold">Gestão Ativa da Carteira</span>
-                    ${usuario.setor === 'industria' ? '<span class="badge bg-warning text-dark small fw-bold ms-2">FIDELIZAÇÃO: META 40%</span>' : ''}
-                </div>
-                
-                <div class="d-flex flex-wrap flex-md-nowrap gap-2 w-100 justify-content-md-end">
-                    <div class="input-group input-group-sm" style="min-width: 180px; max-width: 250px;">
-                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
-                        <input type="text" id="filtroTexto" class="form-control border-start-0 ps-0" placeholder="Buscar cliente...">
-                    </div>
-                    <select id="filtroPosVenda" class="form-select form-select-sm w-auto">
-                        <option value="">Pós-Venda: Todos</option>
-                        <option value="sim">Feito</option>
-                        <option value="pendente">Pendente</option>
-                        <option value="nao">Não Realizado</option>
-                    </select>
-                    <select id="filtroRecorrencia" class="form-select form-select-sm w-auto">
-                        <option value="">Recorrência: Todas</option>
-                        <option value="sim">Comprou</option>
-                        <option value="nao">Inativo</option>
-                    </select>
+                    <div id="paginacaoContainer" class="d-flex justify-content-center mt-3 mb-3"></div>
                 </div>
             </div>
             
-            <div class="card-body p-0 overflow-auto">
-                <div class="table-responsive" style="min-height: 400px;">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4 py-3 text-muted small uppercase">Cliente</th>
-                                <th class="py-3 text-muted small uppercase">Status</th>
-                                <th class="py-3 text-muted small uppercase">Valor</th>
-                                <th class="py-3 text-muted small uppercase">Pós-Venda</th>
-                                <th class="py-3 text-muted small uppercase">Recorrência</th>
-                                <th class="text-end pe-4 py-3 text-muted small uppercase">Ações</th> 
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaClientesBody">
-                            <tr id="linhaVazia" style="display: none;">
-                                <td colspan="6" class="text-center text-muted py-5">
-                                    <i class="fa-solid fa-folder-open fa-2x mb-2 text-light-subtle"></i><br>
-                                    Nenhum cliente corresponde aos filtros aplicados.
-                                </td>
-                            </tr>
-                            
-                            ${clientes.map(c => `
-                                <tr class="cliente-row" data-nome="${c.nome.toLowerCase()}" data-pos="${c.pos_venda || ''}" data-rec="${c.comprou_recorrente || ''}">
-                                    <td class="ps-4 fw-bold text-dark">
-                                        ${c.nome}
-                                        ${c.observacao ? `<br><small class="text-muted fw-normal" style="font-size: 0.75rem;"><i class="fa-solid fa-note-sticky text-warning me-1"></i>${c.observacao}</small>` : ''}
-                                    </td>
-                                    <td>${c.fechou === 'sim' ? '<span class="badge bg-success-subtle text-success border border-success-subtle">Fechado</span>' : '<span class="badge bg-light text-muted border">Pendente</span>'}</td>
-                                    <td class="fw-medium">${formatarBRL(c.valor_venda)}</td> 
-                                    <td>
-                                        ${c.fechou === 'sim' ? `
-                                        <form action="/vendedor/posvenda" method="POST" class="d-inline">
-                                            <input type="hidden" name="id" value="${c.id}">
-                                            <select name="pos_venda" class="form-select form-select-sm d-inline w-auto bg-light-subtle border-0 py-1" onchange="this.form.submit()">
-                                                <option value="pendente" ${c.pos_venda === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
-                                                <option value="sim" ${c.pos_venda === 'sim' ? 'selected' : ''}>✅ Feito</option>
-                                                <option value="nao" ${c.pos_venda === 'nao' ? 'selected' : ''}>❌ Não</option>
-                                            </select>
-                                        </form>
-                                        ` : '<span class="text-muted small">-</span>'}
-                                    </td>
-                                    
-                                    <td>
-                                        ${c.carteira === 'sim' ? `
-                                        <form action="/vendedor/recorrencia" method="POST" class="d-inline">
-                                            <input type="hidden" name="id" value="${c.id}">
-                                            <select name="comprou_recorrente" class="form-select form-select-sm d-inline w-auto bg-light-subtle border-0 py-1" onchange="this.form.submit()">
-                                                <option value="nao" ${c.comprou_recorrente === 'nao' ? 'selected' : ''}>❌ Inativo</option>
-                                                <option value="sim" ${c.comprou_recorrente === 'sim' ? 'selected' : ''}>🛒 Comprou</option>
-                                            </select>
-                                        </form>
-                                        ` : '<span class="text-muted small">Prospecção</span>'}
-                                    </td>
-
-                                    <td class="text-end pe-4">
-                                        <button class="btn btn-sm btn-light text-primary border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalEditar${c.id}" title="Editar"><i class="fa-solid fa-pen-to-square"></i></button>
-                                        <button class="btn btn-sm btn-light text-danger border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExcluir${c.id}" title="Excluir"><i class="fa-solid fa-trash-can"></i></button>
-                                    </td>
-                                </tr>
-
-                                <div class="modal fade" id="modalEditar${c.id}" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow-lg animate-modal">
-                                            <form action="/vendedor/cliente/editar" method="POST">
-                                                <div class="modal-header bg-warning border-0"><h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-edit me-2"></i> Ajustar Registro</h5></div>
-                                                <div class="modal-body p-4">
-                                                    <input type="hidden" name="id" value="${c.id}">
-                                                    <label class="form-label small text-muted">Nome do Cliente</label>
-                                                    <input type="text" name="nome" class="form-control mb-3" value="${c.nome}" required>
-                                                    
-                                                    <div class="row">
-                                                        <div class="col-6">
-                                                            <label class="form-label small text-muted">Origem</label>
-                                                            <select name="prospeccao" class="form-select mb-3">
-                                                                <option value="com_visita" ${c.prospeccao === 'com_visita' ? 'selected' : ''}>Com Visita</option>
-                                                                <option value="sem_visita" ${c.prospeccao === 'sem_visita' ? 'selected' : ''}>Sem Visita</option>
-                                                            </select>
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <label class="form-label small text-muted">Status</label>
-                                                            <select name="fechou" class="form-select mb-3">
-                                                                <option value="sim" ${c.fechou === 'sim' ? 'selected' : ''}>Fechado</option>
-                                                                <option value="nao" ${c.fechou === 'nao' ? 'selected' : ''}>Pendente</option>
-                                                            </select>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div class="row mb-3">
-                                                        <div class="col-6">
-                                                            <label class="form-label small text-muted mb-0">Data Prospecção</label>
-                                                            <input type="date" name="data_prospeccao" class="form-control form-control-sm text-muted" value="${formatarDataInput(c.data_prospeccao)}">
-                                                        </div>
-                                                        <div class="col-6">
-                                                            <label class="form-label small text-muted mb-0">Data Fechamento</label>
-                                                            <input type="date" name="data_fechamento" class="form-control form-control-sm text-muted" value="${formatarDataInput(c.data_fechamento)}">
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <label class="form-label small text-muted">Valor da Venda (R$)</label>
-                                                    <input type="number" step="0.01" name="valor_venda" class="form-control mb-3 fw-bold text-success" value="${c.valor_venda}" required>
-                                                    
-                                                    <div class="bg-light p-3 rounded mb-3">
-                                                        <div class="form-check">
-                                                            <input class="form-check-input" type="checkbox" name="carteira" value="sim" id="cartEdit${c.id}" ${c.carteira === 'sim' ? 'checked' : ''}>
-                                                            <label class="form-check-label" for="cartEdit${c.id}">Cliente da Base (Carteira)</label>
-                                                        </div>
-                                                        <div class="form-check mt-1">
-                                                            <input class="form-check-input" type="checkbox" name="parado" value="sim" id="parEdit${c.id}" ${c.parado === 'sim' ? 'checked' : ''}>
-                                                            <label class="form-check-label" for="parEdit${c.id}">Reativação de Inativo</label>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <label class="form-label small text-muted">Região Estratégica</label>
-                                                    <input type="text" name="regiao" class="form-control mb-3" value="${c.regiao || ''}">
-
-                                                    <label class="form-label small text-muted">Observações (Opcional)</label>
-                                                    <textarea name="observacao" class="form-control" rows="2" placeholder="Anotações extras...">${c.observacao || ''}</textarea>
-                                                </div>
-                                                <div class="modal-footer border-0">
-                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">CANCELAR</button>
-                                                    <button type="submit" class="btn btn-warning fw-bold px-4">SALVAR MUDANÇAS</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="modal fade" id="modalExcluir${c.id}" tabindex="-1">
-                                    <div class="modal-dialog modal-dialog-centered">
-                                        <div class="modal-content border-0 shadow animate-modal">
-                                            <form action="/vendedor/cliente/excluir" method="POST">
-                                                <div class="modal-header bg-danger text-white border-0"><h5 class="modal-title fw-bold"><i class="fa-solid fa-trash-can me-2"></i> REMOVER REGISTRO</h5></div>
-                                                <div class="modal-body p-4 text-center">
-                                                    <input type="hidden" name="id" value="${c.id}">
-                                                    <p>Excluir o cliente <strong>${c.nome}</strong>?</p>
-                                                    <small class="text-danger fw-bold">Isso afetará sua pontuação imediatamente.</small>
-                                                </div>
-                                                <div class="modal-footer border-0 justify-content-center">
-                                                    <button type="button" class="btn btn-light" data-bs-dismiss="modal">NÃO, VOLTAR</button>
-                                                    <button type="submit" class="btn btn-danger px-5 fw-bold">SIM, EXCLUIR</button>
-                                                </div>
-                                            </form>
-                                        </div>
-                                    </div>
-                                </div>
-                            `).join('')}
-                        </tbody>
-                    </table>
-                </div>
-                <div id="paginacaoContainer" class="d-flex justify-content-center mt-3 mb-3"></div>
-            </div>
-        </div>
-        
+        </div> 
     </div>
 
     ${modalListaClientes('modalKpi_sem_visita', 'Prospecção Sem Visita', clientes.filter(c => c.prospeccao === 'sem_visita'))}
     ${modalListaClientes('modalKpi_com_visita', 'Prospecção Com Visita', clientes.filter(c => c.prospeccao === 'com_visita'))}
     ${modalListaClientes('modalKpi_fechar', 'Novos Clientes Conquistados', clientes.filter(c => c.fechou === 'sim'))}
-    ${modalListaClientes('modalKpi_grande', 'Negócios de Grande Porte', clientes.filter(c => c.fechou === 'sim' && c.valor_venda >= minGrande))}
+    ${modalListaClientes('modalKpi_grande', 'Negócios de Grande Porte', clientes.filter(c => c.fechou === 'sim' && (c.valor_venda >= minGrande || c.cliente_grande === 'sim')))}
     ${modalListaClientes('modalKpi_vendas', 'Faturamento Individual Realizado', clientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalKpi_pos_venda', 'Pós-Venda Realizado', clientes.filter(c => c.pos_venda === 'sim'))}
     ${modalListaClientes('modalKpi_visita', 'Manutenção de Carteira (Visitas)', clientes.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita'))}
@@ -536,6 +517,10 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="parado" value="sim" id="parado">
                                 <label class="form-check-label small" for="parado">Reativação (Cliente Inativo)?</label>
+                            </div>
+                            <div class="form-check mt-2">
+                                <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="cliente_grande">
+                                <label class="form-check-label small" for="cliente_grande">Cliente Grande?</label>
                             </div>
                         </div>
                         

@@ -1,4 +1,6 @@
 const layout = require('./layout');
+const menuLateral = require('./menuLateral');
+const loading = require('./loading');
 
 const formatarBRL = (valor) => {
     return Number(valor || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
@@ -20,7 +22,6 @@ const formatarDataInput = (dataStr) => {
 
 module.exports = (usuarioLogado, clientes, vendedores) => {
 
-    // 1. LÓGICA: Extrair automaticamente os Anos e Meses que possuem clientes arquivados
     const anosSet = new Set();
     const mesesSet = new Set();
 
@@ -30,23 +31,19 @@ module.exports = (usuarioLogado, clientes, vendedores) => {
             const d = new Date(dataStr);
             if (!isNaN(d.getTime())) {
                 anosSet.add(d.getFullYear().toString());
-                // Extrai o mês com dois dígitos (ex: "03" para março)
                 mesesSet.add((d.getMonth() + 1).toString().padStart(2, '0'));
             }
         }
     });
 
-    // Ordena do ano mais recente para o mais antigo
     const anosDisponiveis = Array.from(anosSet).sort((a, b) => b - a);
 
-    // Dicionário para traduzir o número do mês para o nome
     const nomesMeses = {
         '01': 'Janeiro', '02': 'Fevereiro', '03': 'Março', '04': 'Abril',
         '05': 'Maio', '06': 'Junho', '07': 'Julho', '08': 'Agosto',
         '09': 'Setembro', '10': 'Outubro', '11': 'Novembro', '12': 'Dezembro'
     };
 
-    // Ordena os meses disponíveis de Jan a Dez e monta um objeto
     const mesesDisponiveis = Array.from(mesesSet).sort().map(num => ({
         valor: num,
         nome: nomesMeses[num]
@@ -54,8 +51,11 @@ module.exports = (usuarioLogado, clientes, vendedores) => {
 
     return layout(`
     
+    ${loading()}
+    ${menuLateral(usuarioLogado)}
+
     <style>
-        .container-85 { width: 85%; margin: 0 auto; font-size: 0.95rem; padding-top: 1rem; }
+        .container-85 { width: 95%; max-width: 1600px; margin: 0 auto; font-size: 0.95rem; padding-top: 2rem; }
         @media (max-width: 992px) { .container-85 { width: 98%; padding-top: 0.5rem; } }
         .animate-up { animation: fadeInUp 0.4s ease backwards; }
         @keyframes fadeInUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
@@ -63,120 +63,122 @@ module.exports = (usuarioLogado, clientes, vendedores) => {
         @keyframes zoomIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
     </style>
 
-    <div class="container-85 mb-5">
-        
-        <header class="d-flex justify-content-between align-items-center bg-white p-3 shadow-sm rounded border mb-4 animate-up">
-            <div class="d-flex align-items-center">
-                <div class="bg-secondary-subtle p-3 rounded-circle me-3 d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
-                    <i class="fa-solid fa-box-archive fa-lg text-secondary"></i>
-                </div>
-                <div>
-                    <h5 class="mb-0 fw-bold text-dark">Histórico: Clientes Arquivados</h5>
-                    <span class="text-muted small">Gerenciamento de ciclos anteriores</span>
-                </div>
-            </div>
-            <div>
-                <a href="/admin" class="btn btn-sm btn-outline-secondary fw-bold px-3 shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Dashboard</a>
-            </div>
-        </header>
-
-        <div class="card shadow-sm rounded-3 border animate-up" style="animation-delay: 0.2s;">
+    <div class="main-content-wrapper">
+        <div class="container-85 mb-5">
             
-            <div class="card-header bg-white py-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+            <header class="d-flex justify-content-between align-items-center bg-white p-3 shadow-sm rounded border mb-4 animate-up">
                 <div class="d-flex align-items-center">
-                    <i class="fa-solid fa-filter text-muted me-2"></i> <span class="fw-bold text-muted">Filtros de Busca</span>
-                </div>
-                
-                <div class="d-flex flex-wrap gap-2 w-100 justify-content-md-end">
-                    <select id="filtroAno" class="form-select form-select-sm" style="max-width: 120px;">
-                        <option value="">Ano: Todos</option>
-                        ${anosDisponiveis.map(a => `<option value="${a}">${a}</option>`).join('')}
-                    </select>
-                    
-                    <select id="filtroMes" class="form-select form-select-sm" style="max-width: 140px;">
-                        <option value="">Mês: Todos</option>
-                        ${mesesDisponiveis.map(m => `<option value="${m.valor}">${m.nome}</option>`).join('')}
-                    </select>
-
-                    <select id="filtroVendedor" class="form-select form-select-sm" style="max-width: 180px;">
-                        <option value="">Todos Vendedores</option>
-                        ${vendedores.map(v => `<option value="${v.nome.toLowerCase()}">${v.nome}</option>`).join('')}
-                    </select>
-
-                    <div class="input-group input-group-sm" style="max-width: 250px;">
-                        <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
-                        <input type="text" id="filtroTexto" class="form-control border-start-0 ps-0" placeholder="Buscar cliente, local...">
+                    <div class="bg-secondary-subtle p-3 rounded-circle me-3 d-flex justify-content-center align-items-center" style="width: 50px; height: 50px;">
+                        <i class="fa-solid fa-box-archive fa-lg text-secondary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-0 fw-bold text-dark">Histórico: Clientes Arquivados</h5>
+                        <span class="text-muted small">Gerenciamento de ciclos anteriores</span>
                     </div>
                 </div>
-            </div>
-            
-            <div class="card-body p-0 overflow-auto">
-                <div class="table-responsive" style="min-height: 400px;">
-                    <table class="table table-hover align-middle mb-0">
-                        <thead class="bg-light">
-                            <tr>
-                                <th class="ps-4 py-3 text-muted small uppercase">Cliente & Local</th>
-                                <th class="py-3 text-muted small uppercase">Vendedor</th>
-                                <th class="py-3 text-muted small uppercase">Datas</th>
-                                <th class="py-3 text-muted small uppercase">Status / Valor</th>
-                                <th class="text-end pe-4 py-3 text-muted small uppercase">Ações</th> 
-                            </tr>
-                        </thead>
-                        <tbody id="tabelaArquivadosBody">
-                            <tr id="linhaVazia" style="display: none;">
-                                <td colspan="5" class="text-center text-muted py-5">
-                                    <i class="fa-solid fa-box-open fa-2x mb-2 text-light-subtle"></i><br>
-                                    Nenhum cliente arquivado corresponde aos filtros selecionados.
-                                </td>
-                            </tr>
-                            
-                            ${clientes.map((c, index) => {
-        // Extraindo Mês e Ano individuais para preencher os 'data-attributes'
-        let ano = '';
-        let mes = '';
-        const dataStr = c.data_fechamento || c.data_prospeccao || c.data_criacao;
-        if (dataStr) {
-            const d = new Date(dataStr);
-            if (!isNaN(d.getTime())) {
-                ano = d.getFullYear().toString();
-                mes = (d.getMonth() + 1).toString().padStart(2, '0');
-            }
-        }
+                <div>
+                    <a href="/admin" class="btn btn-sm btn-outline-secondary fw-bold px-3 shadow-sm"><i class="fa-solid fa-arrow-left me-1"></i> Voltar ao Dashboard</a>
+                </div>
+            </header>
 
-        return `
-                                <tr class="cliente-row" data-vendedor="${(c.vendedor_nome || '').toLowerCase()}" data-texto="${(c.nome + ' ' + (c.regiao || '')).toLowerCase()}" data-ano="${ano}" data-mes="${mes}">
-                                    
-                                    <td class="ps-4 fw-bold text-dark">
-                                        ${c.nome}
-                                        <br><span class="text-muted fw-normal" style="font-size: 0.75rem;"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${c.regiao || 'Não informado'}</span>
-                                    </td>
-                                    
-                                    <td>
-                                        <span class="badge bg-light text-dark border"><i class="fa-solid fa-user text-muted me-1"></i> ${c.vendedor_nome || 'Desconhecido'}</span>
-                                    </td>
-                                    
-                                    <td>
-                                        <div class="text-muted mb-1" style="font-size: 0.75rem;"><i class="fa-regular fa-calendar-plus text-primary me-1"></i> Prosp: <strong>${formatarData(c.data_prospeccao || c.data_criacao)}</strong></div>
-                                        <div class="text-muted" style="font-size: 0.75rem;"><i class="fa-regular fa-calendar-check text-success me-1"></i> Fech: <strong>${formatarData(c.data_fechamento)}</strong></div>
-                                    </td>
-                                    
-                                    <td>
-                                        ${c.fechou === 'sim' ? '<span class="badge bg-success-subtle text-success border border-success-subtle mb-1 d-inline-block">Fechado</span>' : '<span class="badge bg-light text-muted border mb-1 d-inline-block">Pendente</span>'}<br>
-                                        <span class="fw-medium text-dark" style="font-size: 0.9rem;">${formatarBRL(c.valor_venda)}</span>
-                                    </td>
-                                    
-                                    <td class="text-end pe-4">
-                                        ${c.observacao ? `<button class="btn btn-sm btn-outline-info rounded-circle shadow-sm me-1" data-bs-toggle="modal" data-bs-target="#modalObs${index}" title="Ver Observação"><i class="fa-solid fa-eye"></i></button>` : ''}
-                                        <button class="btn btn-sm btn-light text-primary border shadow-sm me-1" data-bs-toggle="modal" data-bs-target="#modalEditar${c.id}" title="Editar Dados"><i class="fa-solid fa-pen-to-square"></i></button>
-                                        <button class="btn btn-sm btn-light text-danger border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExcluir${c.id}" title="Excluir Definitivamente"><i class="fa-solid fa-trash-can"></i></button>
+            <div class="card shadow-sm rounded-3 border animate-up" style="animation-delay: 0.2s;">
+                
+                <div class="card-header bg-white py-3 border-0 d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
+                    <div class="d-flex align-items-center">
+                        <i class="fa-solid fa-filter text-muted me-2"></i> <span class="fw-bold text-muted">Filtros de Busca</span>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-2 w-100 justify-content-md-end">
+                        <select id="filtroAno" class="form-select form-select-sm" style="max-width: 120px;">
+                            <option value="">Ano: Todos</option>
+                            ${anosDisponiveis.map(a => `<option value="${a}">${a}</option>`).join('')}
+                        </select>
+                        
+                        <select id="filtroMes" class="form-select form-select-sm" style="max-width: 140px;">
+                            <option value="">Mês: Todos</option>
+                            ${mesesDisponiveis.map(m => `<option value="${m.valor}">${m.nome}</option>`).join('')}
+                        </select>
+
+                        <select id="filtroVendedor" class="form-select form-select-sm" style="max-width: 180px;">
+                            <option value="">Todos Vendedores</option>
+                            ${vendedores.map(v => `<option value="${v.nome.toLowerCase()}">${v.nome}</option>`).join('')}
+                        </select>
+
+                        <div class="input-group input-group-sm" style="max-width: 250px;">
+                            <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
+                            <input type="text" id="filtroTexto" class="form-control border-start-0 ps-0" placeholder="Buscar cliente, local...">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="card-body p-0 overflow-auto">
+                    <div class="table-responsive" style="min-height: 400px;">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="bg-light">
+                                <tr>
+                                    <th class="ps-4 py-3 text-muted small uppercase">Cliente & Local</th>
+                                    <th class="py-3 text-muted small uppercase">Vendedor</th>
+                                    <th class="py-3 text-muted small uppercase">Datas</th>
+                                    <th class="py-3 text-muted small uppercase">Status / Valor</th>
+                                    <th class="text-end pe-4 py-3 text-muted small uppercase">Ações</th> 
+                                </tr>
+                            </thead>
+                            <tbody id="tabelaArquivadosBody">
+                                <tr id="linhaVazia" style="display: none;">
+                                    <td colspan="5" class="text-center text-muted py-5">
+                                        <i class="fa-solid fa-box-open fa-2x mb-2 text-light-subtle"></i><br>
+                                        Nenhum cliente arquivado corresponde aos filtros selecionados.
                                     </td>
                                 </tr>
-                                `
-    }).join('')}
-                        </tbody>
-                    </table>
+                                
+                                ${clientes.map((c, index) => {
+            let ano = '';
+            let mes = '';
+            const dataStr = c.data_fechamento || c.data_prospeccao || c.data_criacao;
+            if (dataStr) {
+                const d = new Date(dataStr);
+                if (!isNaN(d.getTime())) {
+                    ano = d.getFullYear().toString();
+                    mes = (d.getMonth() + 1).toString().padStart(2, '0');
+                }
+            }
+
+            return `
+                                    <tr class="cliente-row" data-vendedor="${(c.vendedor_nome || '').toLowerCase()}" data-texto="${(c.nome + ' ' + (c.regiao || '')).toLowerCase()}" data-ano="${ano}" data-mes="${mes}">
+                                        
+                                        <td class="ps-4 fw-bold text-dark">
+                                            ${c.nome}
+                                            ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> VIP</span>' : ''}
+                                            <br><span class="text-muted fw-normal" style="font-size: 0.75rem;"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${c.regiao || 'Não informado'}</span>
+                                        </td>
+                                        
+                                        <td>
+                                            <span class="badge bg-light text-dark border"><i class="fa-solid fa-user text-muted me-1"></i> ${c.vendedor_nome || 'Desconhecido'}</span>
+                                        </td>
+                                        
+                                        <td>
+                                            <div class="text-muted mb-1" style="font-size: 0.75rem;"><i class="fa-regular fa-calendar-plus text-primary me-1"></i> Prosp: <strong>${formatarData(c.data_prospeccao || c.data_criacao)}</strong></div>
+                                            <div class="text-muted" style="font-size: 0.75rem;"><i class="fa-regular fa-calendar-check text-success me-1"></i> Fech: <strong>${formatarData(c.data_fechamento)}</strong></div>
+                                        </td>
+                                        
+                                        <td>
+                                            ${c.fechou === 'sim' ? '<span class="badge bg-success-subtle text-success border border-success-subtle mb-1 d-inline-block">Fechado</span>' : '<span class="badge bg-light text-muted border mb-1 d-inline-block">Pendente</span>'}<br>
+                                            <span class="fw-medium text-dark" style="font-size: 0.9rem;">${formatarBRL(c.valor_venda)}</span>
+                                        </td>
+                                        
+                                        <td class="text-end pe-4">
+                                            ${c.observacao ? `<button class="btn btn-sm btn-outline-info rounded-circle shadow-sm me-1" data-bs-toggle="modal" data-bs-target="#modalObs${index}" title="Ver Observação"><i class="fa-solid fa-eye"></i></button>` : ''}
+                                            <button class="btn btn-sm btn-light text-primary border shadow-sm me-1" data-bs-toggle="modal" data-bs-target="#modalEditar${c.id}" title="Editar Dados"><i class="fa-solid fa-pen-to-square"></i></button>
+                                            <button class="btn btn-sm btn-light text-danger border shadow-sm" data-bs-toggle="modal" data-bs-target="#modalExcluir${c.id}" title="Excluir Definitivamente"><i class="fa-solid fa-trash-can"></i></button>
+                                        </td>
+                                    </tr>
+                                    `
+        }).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div id="paginacaoContainer" class="d-flex justify-content-center mt-3 mb-3"></div>
                 </div>
-                <div id="paginacaoContainer" class="d-flex justify-content-center mt-3 mb-3"></div>
             </div>
         </div>
     </div>
@@ -254,6 +256,10 @@ module.exports = (usuarioLogado, clientes, vendedores) => {
                                 <div class="form-check mt-1">
                                     <input class="form-check-input" type="checkbox" name="parado" value="sim" id="parEdit${c.id}" ${c.parado === 'sim' ? 'checked' : ''}>
                                     <label class="form-check-label" for="parEdit${c.id}">Reativação de Inativo</label>
+                                </div>
+                                <div class="form-check mt-1">
+                                    <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="grandeEdit${c.id}" ${c.cliente_grande === 'sim' ? 'checked' : ''}>
+                                    <label class="form-check-label" for="grandeEdit${c.id}">Marcar como Cliente Grande VIP?</label>
                                 </div>
                             </div>
                             
