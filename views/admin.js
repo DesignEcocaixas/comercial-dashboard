@@ -119,7 +119,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
         const metasSetor = u.setor === 'ecommerce' ? metas.ecommerce : metas.industria;
         
-        // Verifica se a meta individual existe, caso contrário usa a meta base do setor
         const m_sem = u.qtd_prosp_sem_visita > 0 ? u.qtd_prosp_sem_visita : (metasSetor?.qtd_prosp_sem_visita || 0);
         const m_com = u.qtd_prosp_com_visita > 0 ? u.qtd_prosp_com_visita : (metasSetor?.qtd_prosp_com_visita || 0);
         const m_novos = u.qtd_clientes_fechar > 0 ? u.qtd_clientes_fechar : (metasSetor?.qtd_clientes_fechar || 0);
@@ -154,7 +153,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     });
 
     const taxaAlcancadaInd = sumIndKpi.carteira > 0 ? (sumIndKpi.fidelizados / sumIndKpi.carteira) * 100 : 0;
-    // A meta da taxa de retenção da indústria é a média das metas individuais cadastradas
     const taxaMetaInd = sumIndMeta.count > 0 ? (sumIndMeta.taxaSum / sumIndMeta.count) : 40;
 
     return layout(`
@@ -336,7 +334,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     const kpiVendas = clientesU.filter(c => c.fechou === 'sim').reduce((acc, c) => acc + Number(c.valor_venda), 0) + Number(u.faturamento_manual || 0);
                     const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
                     const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
-                    const kpiReativ = clientesU.filter(c => c.parado === 'sim').length;
+                    const kpiReativ = clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim').length;
                     const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
                     const kpiFidel = clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim').length;
                     const taxaInd = kpiCarteira > 0 ? (kpiFidel / kpiCarteira) * 100 : 0;
@@ -917,7 +915,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     <div class="modal fade" id="modalZerarCiclo" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg">
-                <form action="/admin/zerar-ciclo" method="POST">
+                <form id="formZerarCiclo">
                     <div class="modal-header bg-danger text-white border-0">
                         <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Fechar mês</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -926,7 +924,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <i class="fa-solid fa-rotate-right fa-3x text-danger mb-3"></i>
                         <h5 class="fw-bold text-dark">Tem certeza absoluta?</h5>
                         <p class="text-muted mb-0">Esta ação irá arquivar todos os clientes atuais e <strong>zerar os pontos e as métricas</strong> de todos os vendedores instantaneamente.</p>
-                        <p class="text-muted small mt-2">Os clientes continueão salvos no banco de dados, mas o painel começará um ciclo novo e limpo a partir de agora.</p>
+                        <p class="text-muted small mt-2">Os clientes continuarão salvos no banco de dados, mas o painel começará um ciclo novo e limpo a partir de agora.</p>
                     </div>
                     <div class="modal-footer border-0 justify-content-center bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
@@ -937,9 +935,75 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         </div>
     </div>
 
+    <div class="modal fade" id="modalFechamentoSucesso" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg text-center p-4 animate-modal">
+                <div class="mb-3">
+                    <i class="fa-solid fa-circle-check text-success" style="font-size: 4.5rem;"></i>
+                </div>
+                <h4 class="fw-bold text-dark">Mês Fechado com Sucesso!</h4>
+                <p class="text-muted mb-4">Todos os dados foram arquivados com segurança e os placares zerados para o novo ciclo.</p>
+                
+                <div class="d-grid gap-2">
+                    <a id="btnDownloadFechamento" href="#" class="btn btn-success fw-bold py-2 shadow-sm" download>
+                        <i class="fa-solid fa-download me-2"></i> Baixar Relatório do Ciclo Encerrado
+                    </a>
+                    <button type="button" class="btn btn-light border fw-bold py-2 shadow-sm" onclick="window.location.reload()">
+                        Voltar ao Painel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
     document.addEventListener("DOMContentLoaded", function() {
         
+        // --- INTERCEPTANDO O FECHAMENTO DO MÊS VIA AJAX ---
+        const formZerar = document.getElementById('formZerarCiclo');
+        if(formZerar) {
+            formZerar.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const btnSubmit = this.querySelector('button[type="submit"]');
+                const btnCancel = this.querySelector('button[data-bs-dismiss="modal"]');
+                
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Processando...';
+                btnSubmit.disabled = true;
+                btnCancel.disabled = true;
+
+                try {
+                    const response = await fetch('/admin/zerar-ciclo', {
+                        method: 'POST',
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if(data.success) {
+                        // Esconde modal de confirmação
+                        const modalAtual = bootstrap.Modal.getInstance(document.getElementById('modalZerarCiclo'));
+                        modalAtual.hide();
+                        
+                        // Configura o botão de download com a URL do arquivo gerado
+                        document.getElementById('btnDownloadFechamento').href = data.downloadUrl;
+                        
+                        // Mostra modal de sucesso com opção de download
+                        const modalSucesso = new bootstrap.Modal(document.getElementById('modalFechamentoSucesso'));
+                        modalSucesso.show();
+                    } else {
+                        alert('Erro ao fechar o ciclo: ' + (data.error || 'Desconhecido'));
+                        window.location.reload();
+                    }
+                } catch(err) {
+                    console.error(err);
+                    alert('Erro de comunicação com o servidor.');
+                    window.location.reload();
+                }
+            });
+        }
+        
+        // Mascaras de moeda
         const aplicarMascaraMoeda = (input) => {
             let valor = input.value;
             if (valor === "") return;
@@ -973,6 +1037,9 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
         const forms = document.querySelectorAll('form');
         forms.forEach(form => {
+            // Ignora o form de zerar ciclo pois ele é tratado no fetch acima
+            if (form.id === 'formZerarCiclo') return;
+            
             form.addEventListener('submit', function() {
                 const formInputs = form.querySelectorAll('.mascara-moeda');
                 formInputs.forEach(input => {
@@ -985,6 +1052,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             });
         });
 
+        // Paginação
         const inputTexto = document.getElementById('filtroTextoAdmin');
         const containerPaginacao = document.getElementById('paginacaoAdminContainer');
         const linhaVazia = document.getElementById('linhaVaziaAdmin');
