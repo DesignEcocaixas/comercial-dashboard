@@ -579,6 +579,69 @@ app.get('/admin', checarAuth, async (req, res) => {
   res.send(adminView(req.session.usuario, usuarios, metasPorSetor, kpisPorSetor, metaGlobal, alcancadoGlobal, todosClientes));
 });
 
+// ==========================================
+// ROTA DO VENDEDOR
+// ==========================================
+app.get('/vendedor', checarAuth, async (req, res) => {
+    if (req.session.usuario.tipo !== 'vendedor') return res.redirect('/admin');
+
+    const usuario = req.session.usuario;
+    const [clientes] = await db.query('SELECT * FROM clientes WHERE vendedor_id = ? AND arquivado = 0 ORDER BY id DESC', [usuario.id]);
+    
+    const [metasDb] = await db.query('SELECT * FROM metas WHERE setor = ?', [usuario.setor]);
+    const metaSetor = metasDb[0] || {};
+    
+    const metas = {
+        meta_geral: usuario.meta_geral > 0 ? usuario.meta_geral : metaSetor.meta_geral,
+        qtd_prosp_sem_visita: usuario.qtd_prosp_sem_visita > 0 ? usuario.qtd_prosp_sem_visita : metaSetor.qtd_prosp_sem_visita,
+        qtd_prosp_com_visita: usuario.qtd_prosp_com_visita > 0 ? usuario.qtd_prosp_com_visita : metaSetor.qtd_prosp_com_visita,
+        qtd_clientes_fechar: usuario.qtd_clientes_fechar > 0 ? usuario.qtd_clientes_fechar : metaSetor.qtd_clientes_fechar,
+        qtd_cliente_grande: usuario.qtd_cliente_grande > 0 ? usuario.qtd_cliente_grande : metaSetor.qtd_cliente_grande,
+        qtd_pos_venda: usuario.qtd_pos_venda > 0 ? usuario.qtd_pos_venda : metaSetor.qtd_pos_venda,
+        qtd_visitas_carteira: usuario.qtd_visitas_carteira > 0 ? usuario.qtd_visitas_carteira : metaSetor.qtd_visitas_carteira,
+        qtd_reativacoes: usuario.qtd_reativacoes > 0 ? usuario.qtd_reativacoes : metaSetor.qtd_reativacoes,
+        taxa_retencao: usuario.taxa_retencao > 0 ? usuario.taxa_retencao : metaSetor.taxa_retencao
+    };
+
+    const [metaGlobalDb] = await db.query('SELECT * FROM meta_global WHERE id = 1');
+    const [totalVendasDb] = await db.query('SELECT SUM(valor_venda) as total FROM clientes WHERE fechou = "sim" AND arquivado = 0');
+    const metaGlobal = metaGlobalDb[0]?.valor || 0;
+    
+    let alcancadoGlobal = Number(totalVendasDb[0]?.total || 0);
+    const valorClienteGrande = usuario.valor_cliente_grande > 0 ? usuario.valor_cliente_grande : (usuario.setor === 'ecommerce' ? 5000 : 15000);
+
+    const [kpis] = await db.query(`
+        SELECT 
+            SUM(IF(prospeccao = 'sem_visita', 1, 0)) AS prosp_sem_visita,
+            SUM(IF(prospeccao = 'com_visita', 1, 0)) AS prosp_com_visita,
+            SUM(IF(fechou = 'sim', 1, 0)) AS clientes_fechar,
+            SUM(IF(fechou = 'sim' AND (valor_venda >= ? OR cliente_grande = 'sim'), 1, 0)) AS qtd_cliente_grande,
+            SUM(IF(fechou = 'sim', valor_venda, 0)) AS valor_total_vendas, 
+            SUM(IF(pos_venda = 'sim', 1, 0)) AS pos_venda,
+            SUM(IF(carteira = 'sim' AND prospeccao = 'com_visita', 1, 0)) AS visitas_carteira,
+            SUM(IF(parado = 'sim' AND fechou = 'sim', 1, 0)) AS reativacoes,
+            SUM(IF(carteira = 'sim', 1, 0)) AS total_carteira,
+            SUM(IF(carteira = 'sim' AND comprou_recorrente = 'sim', 1, 0)) AS total_fidelizados
+        FROM clientes 
+        WHERE vendedor_id = ? AND arquivado = 0
+    `, [valorClienteGrande, usuario.id]);
+
+    const [userAtualizado] = await db.query('SELECT * FROM usuarios WHERE id = ?', [usuario.id]);
+    req.session.usuario = userAtualizado[0];
+
+    const [usuarios] = await db.query('SELECT * FROM usuarios WHERE tipo = "vendedor" ORDER BY pontuacao DESC');
+    const [todosClientes] = await db.query('SELECT * FROM clientes WHERE arquivado = 0');
+
+    const somaManualTotal = usuarios.reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
+    alcancadoGlobal += somaManualTotal;
+
+    if (kpis[0]) {
+        kpis[0].valor_total_vendas = Number(kpis[0].valor_total_vendas || 0) + Number(req.session.usuario.faturamento_manual || 0);
+    }
+
+    res.send(vendedorView(req.session.usuario, clientes, metas, kpis[0] || {}, metaGlobal, alcancadoGlobal, usuarios, todosClientes));
+});
+
 // Salvar Meta Global (Apenas Admin)
 app.post('/admin/meta-global', checarAuth, async (req, res) => {
   if (req.session.usuario.tipo === 'admin') {
