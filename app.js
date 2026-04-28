@@ -41,35 +41,162 @@ app.get('/', (req, res) => {
   res.send(layoutView(`
 
 <style>
-body{ background:#0f0f0f; min-height:100vh; display:flex; align-items:center; justify-content:center; color:#e5e5e5; }
-.login-container{ width:100%; max-width:420px; }
-.login-card{ background:#1a1a1a; border:1px solid #2e2e2e; border-radius:10px; padding:40px; box-shadow:0 10px 30px rgba(0,0,0,0.6); }
-.login-title{ font-weight:600; color:#ffffff; }
-.login-sub{ font-size:14px; color:#9ca3af; }
-.input-token{ background:#0f0f0f; border:1px solid #333; color:#e5e5e5; }
-.input-token::placeholder{ color:#6b7280; }
-.input-token:focus{ background:#0f0f0f; border-color:#6b7280; color:#fff; box-shadow:none; }
-.btn-login{ background:#2b2b2b; border:1px solid #3a3a3a; color:#fff; font-weight:600; transition:0.2s; }
-.btn-login:hover{ background:#3a3a3a; }
-.login-icon{ font-size:36px; color:#9ca3af; }
+body { 
+    background-color: #0f0f0f; 
+    min-height: 100vh; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
+    color: #e5e5e5; 
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    overflow: hidden; /* Evita rolagem com o movimento do fundo */
+}
+
+/* Efeito Gradient Smash Animado (Azul) */
+body::before, body::after {
+    content: '';
+    position: absolute;
+    width: 60vw;
+    height: 60vw;
+    border-radius: 50%;
+    background: rgba(13, 110, 253, 0.30); /* Azul Primário com opacidade */
+    filter: blur(120px); /* Deixa a borda suave para criar o efeito "smash/orb" */
+    z-index: 0;
+    animation: floatOrb 12s infinite ease-in-out alternate;
+}
+
+/* Posição da primeira luz */
+body::before {
+    top: -10%;
+    left: -10%;
+}
+
+/* Posição da segunda luz */
+body::after {
+    bottom: -20%;
+    right: -10%;
+    background: rgba(13, 110, 253, 0.20); /* Azul levemente mais fraco */
+    animation-delay: -6s; /* Tempo negativo para moverem de forma diferente */
+    animation-duration: 15s;
+}
+
+/* Movimento suave e fluido */
+@keyframes floatOrb {
+    0% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(15%, 10%) scale(1.1); }
+    66% { transform: translate(-10%, 20%) scale(0.9); }
+    100% { transform: translate(5%, -10%) scale(1); }
+}
+
+.login-container { 
+    width: 100%; 
+    max-width: 340px; 
+    z-index: 1; /* Garante que o card fique ACIMA das luzes do fundo */
+    padding: 20px;
+    position: relative; 
+}
+.text-center { text-align: center; }
+
+/* Ícone central azul */
+.login-icon { 
+    font-size: 60px; 
+    color: #0d6efd; 
+    margin-bottom: 35px; 
+}
+
+/* Container do input para embutir o ícone */
+.input-wrapper {
+    position: relative;
+    margin-bottom: 15px;
+}
+.input-wrapper i {
+    position: absolute;
+    left: 15px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.8);
+    font-size: 14px;
+}
+
+/* Input transparente idêntico à imagem */
+.input-token { 
+    background: transparent; 
+    border: 1px solid rgba(255, 255, 255, 0.6); 
+    color: #ffffff; 
+    padding: 12px 15px 12px 42px;
+    border-radius: 4px;
+    width: 100%;
+    font-size: 13px;
+    letter-spacing: 0.5px;
+    transition: 0.3s;
+}
+.input-token::placeholder { 
+    color: rgba(255, 255, 255, 0.6); 
+}
+.input-token:focus { 
+    background: rgba(255, 255, 255, 0.05); 
+    border-color: #0d6efd; 
+    color: #ffffff; 
+    outline: none; 
+}
+
+/* Botão azul */
+.btn-login { 
+    background: #0d6efd; 
+    border: 1px solid #0d6efd; 
+    color: #ffffff; 
+    font-weight: 700; 
+    transition: 0.2s; 
+    width: 100%;
+    padding: 12px;
+    border-radius: 4px;
+    margin-top: 5px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    cursor: pointer;
+}
+.btn-login:hover { 
+    background: #0b5ed7; 
+    border-color: #0a58ca; 
+}
+
+/* Link inferior */
+.login-sub {
+    text-align: center;
+    margin-top: 20px;
+}
+.login-sub a {
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    font-size: 12px;
+}
+.login-sub a:hover {
+    text-decoration: underline;
+    color: #ffffff;
+}
 </style>
 
 <div class="login-container">
-    <div class="login-card">
-        <div class="text-center mb-4">
-            <i class="fa-solid fa-chart-line login-icon"></i>
-            <h3 class="login-title mt-2">Dashboard Comercial</h3>
-            <div class="login-sub">Acesso ao sistema</div>
-        </div>
-        <form action="/login" method="POST">
-            <div class="mb-3">
-                <label class="form-label text-secondary">Token de acesso</label>
-                <input type="text" name="token" class="form-control input-token" placeholder="Digite seu token" required>
-            </div>
-            <button class="btn btn-login w-100"><i class="fa-solid fa-right-to-bracket me-2"></i> Entrar</button>
-        </form>
+    <div class="text-center">
+        <i class="fa-solid fa-chart-line login-icon"></i>
     </div>
+    
+    <form action="/login" method="POST">
+        <div class="input-wrapper">
+            <i class="fa-regular fa-user"></i>
+            <input type="text" name="token" class="input-token" placeholder="TOKEN DE ACESSO" required autocomplete="off">
+        </div>
+        
+        <button type="submit" class="btn-login">Entrar</button>
+        
+        <div class="login-sub">
+            <a href="#">Esqueceu o token?</a>
+        </div>
+    </form>
 </div>
+
 `));
 });
 

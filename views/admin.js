@@ -201,7 +201,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             <div class="card shadow-sm border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative">
                                 <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                                 <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral</h6>
                                     <div class="progress mb-3" style="height: 18px; border-radius: 20px; border: 1px solid #e0e0e0; overflow: hidden;">
                                         <div class="progress-bar bg-${corGlobal} progress-bar-striped progress-bar-animated" role="progressbar" style="width: ${porcentagem}%; font-size: 0.75rem; font-weight: bold;">
                                              ${porcentagem.toFixed(1)}%
@@ -408,40 +408,48 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             </div>
                         </div>
 
-                        <div class="bg-light p-2 rounded border border-light-subtle shadow-sm">
-                            <form action="/admin/exportar-clientes" method="GET" class="row g-2 align-items-center m-0 flex-nowrap">
-                                <div class="col-auto d-flex align-items-center">
+                        <div class="bg-light p-3 rounded border border-light-subtle shadow-sm">
+                            <form action="/admin/exportar-clientes" method="GET" class="row g-2 align-items-center m-0">
+                                
+                                <div class="col-12 col-lg-auto d-flex align-items-center mb-1 mb-lg-0">
                                     <span class="small fw-bold text-muted mb-0"><i class="fa-solid fa-download text-success me-1"></i> Exportar Dados:</span>
                                 </div>
-                                <div class="col-auto" style="min-width: 220px;">
+                                
+                                <div class="col-12 col-md-6 col-lg-auto flex-grow-1">
                                     <select name="vendedor_id" class="form-select form-select-sm border-secondary-subtle" required>
                                         <option value="todos">Todos os Vendedores</option>
                                         ${usuarios.filter(u => u.tipo === 'vendedor').map(u => `<option value="${u.id}">${u.nome}</option>`).join('')}
                                     </select>
                                 </div>
-                                <div class="col-auto" style="min-width: 180px;">
+                                
+                                <div class="col-6 col-md-3 col-lg-auto">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-white text-muted border-secondary-subtle">De</span>
                                         <input type="date" name="data_inicio" class="form-control border-secondary-subtle" required>
                                     </div>
                                 </div>
-                                <div class="col-auto" style="min-width: 180px;">
+                                
+                                <div class="col-6 col-md-3 col-lg-auto">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-white text-muted border-secondary-subtle">Até</span>
                                         <input type="date" name="data_fim" class="form-control border-secondary-subtle" required>
                                     </div>
                                 </div>
-                                <div class="col-auto" style="min-width: 220px; max-width: 300px;">
+                                
+                                <div class="col-12 col-md-auto flex-grow-1">
                                     <div class="input-group input-group-sm">
                                         <span class="input-group-text bg-light border-end-0"><i class="fa-solid fa-search text-muted"></i></span>
                                         <input type="text" id="filtroTextoAdmin" class="form-control border-start-0 ps-0" placeholder="Buscar por cliente ou vendedor...">
                                     </div>
                                 </div>
-                                <div class="col-auto ms-auto">
-                                    <button type="submit" class="btn btn-sm btn-success fw-bold"><i class="fa-solid fa-file-excel me-1"></i> Baixar Tabela</button>
+                                
+                                <div class="col-12 col-lg-auto text-end mt-2 mt-lg-0">
+                                    <button type="submit" class="btn btn-sm btn-success fw-bold w-100"><i class="fa-solid fa-file-excel me-1"></i> Baixar Tabela</button>
                                 </div>
+                                
                             </form>
                         </div>
+
                     </div>
                     
                     <div class="card-body p-0 overflow-auto">
@@ -564,7 +572,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${metas.ecommerce?.qtd_reativacoes || 0}"></div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">Vendas Outras Regiões</label><input type="number" name="qtd_vendas_outras_regioes" class="form-control" value="${metas.ecommerce?.qtd_vendas_outras_regioes || 0}"></div>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-success"><i class="fa-solid fa-check me-1"></i> Salvar Metas</button></div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-success"><i class="fa-solid fa-check me-1"></i> Salvar</button></div>
                 </form>
             </div>
         </div>
@@ -594,7 +602,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${metas.industria?.qtd_reativacoes || 0}"></div>
                         <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">Taxa de Retenção (%)</label><input type="number" step="0.01" name="taxa_retencao" class="form-control" value="${metas.industria?.taxa_retencao || 0}"></div>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar Metas</button></div>
+                    <div class="modal-footer"><button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar</button></div>
                 </form>
             </div>
         </div>
@@ -629,7 +637,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     </div>
                     <div class="modal-footer border-0 bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-check me-1"></i> Salvar Metas</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-check me-1"></i> Salvar</button>
                     </div>
                 </form>
             </div>
@@ -660,7 +668,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     </div>
                     <div class="modal-footer border-0 bg-light">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success fw-bold px-4"><i class="fa-solid fa-check me-1"></i> Salvar Ajuste</button>
+                        <button type="submit" class="btn btn-success fw-bold px-4"><i class="fa-solid fa-check me-1"></i> Salvar</button>
                     </div>
                 </form>
             </div>
@@ -844,8 +852,8 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             ${u.setor === 'industria' ? `<div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">Taxa de Retenção (%)</label><input type="number" step="0.01" name="taxa_retencao" class="form-control" value="${u.taxa_retencao || 0}"></div>` : ''}
                         </div>
                         <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar p/ Equipe</button>
-                            <button type="submit" class="btn btn-dark"><i class="fa-solid fa-check me-1"></i> Salvar Metas Individuais</button>
+                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
+                            <button type="submit" class="btn btn-dark"><i class="fa-solid fa-check me-1"></i> Salvar</button>
                         </div>
                     </form>
                 </div>
@@ -878,7 +886,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         </div>
                         <div class="modal-footer justify-content-between">
                             <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
-                            <button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar Alterações</button>
+                            <button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar</button>
                         </div>
                     </form>
                 </div>
@@ -972,7 +980,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <i class="fa-solid fa-download me-2"></i> Baixar Relatório do Ciclo Encerrado
                     </a>
                     <button type="button" class="btn btn-light border fw-bold py-2 shadow-sm" onclick="window.location.reload()">
-                        Voltar ao Painel
+                        Voltar
                     </button>
                 </div>
             </div>
