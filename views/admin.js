@@ -54,7 +54,8 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
                         <h6 class="text-muted mb-0 text-truncate" style="font-size: ${titleSize}; text-transform: uppercase; letter-spacing: 0.2px;" title="${titulo}">${titulo}</h6>
                         
                         <div class="mb-0 fw-bold text-${cor}" style="font-size: ${valSize}; line-height: 1.2;">
-                            ${textoAlcancado} <span class="text-muted fw-normal d-inline-block" style="font-size: ${metaSize};">/ ${textoMeta}</span>
+                            <span class="counter-animate" data-val="${numAlcancado}" data-currency="${formatarMoeda}" data-percent="${formatarPercentual}">${textoAlcancado}</span> 
+                            <span class="text-muted fw-normal d-inline-block" style="font-size: ${metaSize};">/ ${textoMeta}</span>
                         </div>
                     </div>
 
@@ -230,6 +231,25 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             }
 
             /* ========================================= */
+            /* EFEITO DEGRADÊ FLUIDO (META GERAL)        */
+            /* ========================================= */
+            @keyframes fluidGradient {
+                0% { background-position: 0% 50%; }
+                50% { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+            }
+            .fluid-success {
+                background: linear-gradient(270deg, #198754, #20c997, #0f5132, #28a745);
+                background-size: 400% 400%;
+                animation: fluidGradient 6s ease infinite !important;
+            }
+            .fluid-primary {
+                background: linear-gradient(270deg, #0d6efd, #6610f2, #0dcaf0, #0d6efd);
+                background-size: 400% 400%;
+                animation: fluidGradient 6s ease infinite !important;
+            }
+
+            /* ========================================= */
             /* BOTÃO FLUTUANTE DE TUTORIAIS              */
             /* ========================================= */
             .fab-tutorial {
@@ -267,6 +287,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         const atingiuGlobal = (vAlcancado >= vMeta && vMeta > 0);
                         const corGlobal = atingiuGlobal ? 'success' : 'primary';
                         const glowGlobal = atingiuGlobal ? 'glow-success' : '';
+                        const fluidClass = atingiuGlobal ? 'fluid-success' : 'fluid-primary';
                         const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
                         const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
                         const mesNome = mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1);
@@ -276,16 +297,19 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             <div class="card shadow-sm border-start border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative ${glowGlobal}">
                                 <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                                 <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
-                                    <div class="progress mb-3" style="height: 18px; border-radius: 20px; border: 1px solid #e0e0e0; overflow: hidden;">
-                                        <div class="progress-bar bg-${corGlobal} progress-bar-striped progress-bar-animated" role="progressbar" style="width: ${porcentagem}%; font-size: 0.75rem; font-weight: bold;">
-                                             ${porcentagem.toFixed(1)}%
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral</h6>
+                                    
+                                    <div class="progress mb-3 shadow-sm position-relative" style="height: 35px; border-radius: 25px; background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">
+                                        <div class="progress-bar ${fluidClass} progress-bar-animate" role="progressbar" data-width="${porcentagem}" style="width: 0%;"></div>
+                                        <div class="position-absolute top-50 start-50 translate-middle text-white fw-bold progress-text-animate" style="font-size: 1.25rem; letter-spacing: 0.5px; z-index: 2; text-shadow: none;" data-value="${porcentagem}">
+                                            0.0%
                                         </div>
                                     </div>
+
                                     <div class="d-flex justify-content-between align-items-center mt-2 px-2">
                                         <div class="text-start">
                                             <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Alcançado</span>
-                                            <strong class="text-${corGlobal}" style="font-size: 1rem;">${formatarBRL(vAlcancado)}</strong>
+                                            <strong class="text-${corGlobal}" style="font-size: 1rem;"><span class="counter-animate" data-val="${vAlcancado}" data-currency="true">R$ 0,00</span></strong>
                                         </div>
                                         <div class="text-end">
                                             <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Meta</span>
@@ -323,7 +347,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-end pe-3 py-2"><strong class="text-success"><i class="fa-solid fa-star text-warning small me-1"></i> ${u.pontuacao}</strong></td>
+                                                <td class="text-end pe-3 py-2"><strong class="text-success"><i class="fa-solid fa-star text-warning small me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span></strong></td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -362,7 +386,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                         </div>
                                                     </td>
                                                     <td class="text-end pe-3 py-2">
-                                                        <strong class="text-success" style="font-size: 0.9rem;">${formatarBRL(u.totalVendido)} <i class="fa-solid fa-pen-to-square text-muted ms-1" style="font-size: 0.75rem;"></i></strong>
+                                                        <strong class="text-success" style="font-size: 0.9rem;"><span class="counter-animate" data-val="${u.totalVendido}" data-currency="true">R$ 0,00</span> <i class="fa-solid fa-pen-to-square text-muted ms-1" style="font-size: 0.75rem;"></i></strong>
                                                     </td>
                                                 </tr>
                                             `).join('');
@@ -899,7 +923,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             '<img src="' + (u.foto || 'https://via.placeholder.com/40') + '" width="40" height="40" class="rounded-circle border border-2 border-primary me-3 shadow-sm" style="object-fit: cover;">' +
                             '<div>' +
                                 '<h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-primary me-2"></i> Conquistas: ' + u.nome + '</h5>' +
-                                '<span class="badge bg-primary mt-1"><i class="fa-solid fa-star me-1"></i> ' + u.pontuacao + ' Pontos</span>' +
+                                '<span class="badge bg-primary mt-1"><i class="fa-solid fa-star me-1"></i> <span class="counter-animate" data-val="' + u.pontuacao + '">0</span> Pontos</span>' +
                             '</div>' +
                             '<button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>' +
                         '</div>' +
@@ -1286,6 +1310,65 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             inner.innerHTML = '<div class="p-5 text-danger w-100">Erro ao carregar tutorial.</div>';
         }
     };
+    
+    // ANIMAÇÕES DE NÚMEROS E PROGRESSO (Acontece no onLoad)
+    setTimeout(function() {
+        const progressBar = document.querySelector('.progress-bar-animate');
+        const progressText = document.querySelector('.progress-text-animate');
+        if (progressBar && progressText) {
+            const targetWidth = parseFloat(progressBar.getAttribute('data-width')) || 0;
+            progressBar.style.width = targetWidth + '%';
+            progressBar.style.transition = 'width 1.5s cubic-bezier(0.22, 1, 0.36, 1)';
+            
+            let startTimestamp = null;
+            const duration = 1500;
+            const step = function(timestamp) {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 4);
+                const currentVal = (easeProgress * targetWidth).toFixed(1);
+                progressText.innerText = currentVal + '%';
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    progressText.innerText = targetWidth.toFixed(1) + '%';
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        const counters = document.querySelectorAll('.counter-animate');
+        counters.forEach(function(counter) {
+            const target = parseFloat(counter.getAttribute('data-val')) || 0;
+            const isCurrency = counter.getAttribute('data-currency') === 'true';
+            const isPercent = counter.getAttribute('data-percent') === 'true';
+            const duration = 1500;
+            let startTimestamp = null;
+
+            const formatVal = function(val) {
+                if (isCurrency) return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                if (isPercent) return val.toFixed(1) + '%';
+                return Math.floor(val);
+            };
+
+            counter.innerText = formatVal(0);
+
+            const step = function(timestamp) {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 4);
+                const currentVal = easeProgress * target;
+                
+                counter.innerText = formatVal(currentVal);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    counter.innerText = formatVal(target);
+                }
+            };
+            window.requestAnimationFrame(step);
+        });
+    }, 100);
     </script>
     `);
 };

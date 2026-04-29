@@ -21,10 +21,26 @@ module.exports = (usuario) => {
         `;
     } else {
         links = `
+            <style>
+                @keyframes fluidGoldBorder {
+                    0% { border-color: rgba(255, 215, 0, 0.4) !important; box-shadow: 0 0 5px rgba(255, 215, 0, 0.1); }
+                    50% { border-color: rgba(255, 165, 0, 1) !important; box-shadow: 0 0 15px rgba(255, 165, 0, 0.6); }
+                    100% { border-color: rgba(255, 215, 0, 0.4) !important; box-shadow: 0 0 5px rgba(255, 215, 0, 0.1); }
+                }
+                .gold-container {
+                    border: 2px solid rgba(255, 215, 0, 0.8) !important;
+                    animation: fluidGoldBorder 3s infinite alternate ease-in-out;
+                    cursor: pointer;
+                    transition: transform 0.2s ease;
+                }
+                .gold-container:hover {
+                    transform: scale(1.03);
+                }
+            </style>
             <div class="px-3 mb-3">
-                <div class="bg-dark rounded-3 p-2 text-center border border-secondary-subtle shadow-sm">
+                <div class="bg-dark rounded-3 p-2 text-center shadow-sm gold-container" data-bs-toggle="modal" data-bs-target="#modalPontosUsuario${usuario.id}" title="Ver minhas conquistas">
                     <span class="text-muted d-block fw-bold text-uppercase mb-1" style="font-size: 0.65rem; letter-spacing: 1px;">Meus Pontos</span>
-                    <h4 class="text-primary fw-bold mb-0"><i class="fa-solid fa-star me-1 text-primary"></i> ${usuario.pontuacao || 0}</h4>
+                    <h4 class="text-warning fw-bold mb-0"><i class="fa-solid fa-star me-1 text-warning"></i> ${usuario.pontuacao || 0}</h4>
                 </div>
             </div>
 

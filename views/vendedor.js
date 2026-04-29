@@ -39,7 +39,8 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
                     <div style="min-width: 0; flex-grow: 1; padding-right: 2px;">
                         <h6 class="text-muted mb-0 text-truncate" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;" title="${titulo}">${titulo}</h6>
                         <div class="mb-0 fw-bold text-${cor}" style="font-size: 1.1rem; line-height: 1.2;">
-                            ${textoAlcancado} <span class="text-muted fw-normal d-inline-block" style="font-size: 0.85rem;">/ ${textoMeta}</span>
+                            <span class="counter-animate" data-val="${numAlcancado}" data-currency="${formatarMoeda}" data-percent="${formatarPercentual}">${textoAlcancado}</span> 
+                            <span class="text-muted fw-normal d-inline-block" style="font-size: 0.85rem;">/ ${textoMeta}</span>
                         </div>
                     </div>
                     <div class="bg-light text-${cor} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
@@ -155,6 +156,25 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             animation: dualGlow 2s infinite alternate !important;
             z-index: 1;
         }
+
+        /* ========================================= */
+        /* EFEITO DEGRADÊ FLUIDO (META GERAL)        */
+        /* ========================================= */
+        @keyframes fluidGradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .fluid-success {
+            background: linear-gradient(270deg, #198754, #20c997, #0f5132, #28a745);
+            background-size: 400% 400%;
+            animation: fluidGradient 15s ease infinite !important;
+        }
+        .fluid-primary {
+            background: linear-gradient(270deg, #0d6efd, #6610f2, #0dcaf0, #0d6efd);
+            background-size: 400% 400%;
+            animation: fluidGradient 15s ease infinite !important;
+        }
     </style>
 
     <div class="main-content-wrapper">
@@ -168,6 +188,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                     const atingiuGlobal = (vAlcancado >= vMeta && vMeta > 0);
                     const corGlobal = atingiuGlobal ? 'success' : 'primary';
                     const glowGlobal = atingiuGlobal ? 'glow-success' : '';
+                    const fluidClass = atingiuGlobal ? 'fluid-success' : 'fluid-primary';
                     const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
                     
                     const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
@@ -182,18 +203,17 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
                                 <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
                                 
-                                <div class="progress mb-3" style="height: 18px; border-radius: 20px; border: 1px solid #e0e0e0; overflow: hidden;">
-                                    <div class="progress-bar bg-${corGlobal} progress-bar-striped progress-bar-animated" 
-                                         role="progressbar" 
-                                         style="width: ${porcentagem}%; font-size: 0.75rem; font-weight: bold;">
-                                         ${porcentagem.toFixed(1)}%
+                                <div class="progress mb-3 shadow-sm position-relative" style="height: 35px; border-radius: 25px; background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">
+                                    <div class="progress-bar ${fluidClass} progress-bar-animate" role="progressbar" data-width="${porcentagem}" style="width: 0%;"></div>
+                                    <div class="position-absolute top-50 start-50 translate-middle text-white fw-bold progress-text-animate" style="font-size: 1.25rem; letter-spacing: 0.5px; z-index: 2; text-shadow: none;" data-value="${porcentagem}">
+                                        0.0%
                                     </div>
                                 </div>
                                 
                                 <div class="d-flex justify-content-between align-items-center mt-2 px-2">
                                     <div class="text-start">
                                         <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Alcançado</span>
-                                        <strong class="text-${corGlobal}" style="font-size: 1rem;">${formatarBRL(vAlcancado)}</strong>
+                                        <strong class="text-${corGlobal}" style="font-size: 1rem;"><span class="counter-animate" data-val="${vAlcancado}" data-currency="true">R$ 0,00</span></strong>
                                     </div>
                                     <div class="text-end">
                                         <span class="d-block text-muted text-uppercase" style="font-size: 0.65rem;">Meta</span>
@@ -218,7 +238,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                 </thead>
                                 <tbody>
                                     ${[...usuarios].sort((a, b) => b.pontuacao - a.pontuacao).map((u, index) => `
-                                        <tr style="cursor: pointer; transition: 0.2s; ${u.id === usuario.id ? 'background-color: #f1f3f5; border-left: 3px solid #0d6efd;' : ''}" onmouseover="this.style.backgroundColor='#e9ecef'" onmouseout="this.style.backgroundColor='${u.id === usuario.id ? '#f1f3f5' : 'transparent'}'" data-bs-toggle="modal" data-bs-target="#modalPontosUsuario${u.id}" title="Ver Conquistas">
+                                        <tr style="cursor: pointer; transition: 0.2s; ${u.id === usuario.id ? 'background-color: rgba(13, 110, 253, 0.15); border-left: 3px solid #0d6efd;' : ''}" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'" onmouseout="this.style.backgroundColor='${u.id === usuario.id ? 'rgba(13, 110, 253, 0.15)' : 'transparent'}'" data-bs-toggle="modal" data-bs-target="#modalPontosUsuario${u.id}" title="Ver Conquistas">
                                             <td class="ps-3 py-2">
                                                 <div class="d-flex align-items-center">
                                                     <div class="position-relative me-2">
@@ -231,7 +251,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="text-end pe-3 py-2"><strong class="text-success"><i class="fa-solid fa-star text-warning small me-1"></i> ${u.pontuacao}</strong></td>
+                                            <td class="text-end pe-3 py-2"><strong class="text-success"><i class="fa-solid fa-star text-warning small me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span></strong></td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -262,7 +282,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                         rankingFaturamento.sort((a, b) => b.totalVendido - a.totalVendido);
 
                                         return rankingFaturamento.map((u, index) => `
-                                            <tr class="${u.id === usuario.id ? 'bg-light' : ''}">
+                                            <tr style="transition: 0.2s; ${u.id === usuario.id ? 'background-color: rgba(13, 110, 253, 0.15); border-left: 3px solid #0d6efd;' : ''}" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'" onmouseout="this.style.backgroundColor='${u.id === usuario.id ? 'rgba(13, 110, 253, 0.15)' : 'transparent'}'">
                                                 <td class="ps-3 py-2">
                                                     <div class="d-flex align-items-center">
                                                         <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
@@ -270,7 +290,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                                     </div>
                                                 </td>
                                                 <td class="text-end pe-3 py-2">
-                                                    <strong class="text-success" style="font-size: 0.9rem;">${formatarBRL(u.totalVendido)}</strong>
+                                                    <strong class="text-success" style="font-size: 0.9rem;"><span class="counter-animate" data-val="${u.totalVendido}" data-currency="true">R$ 0,00</span></strong>
                                                 </td>
                                             </tr>
                                         `).join('');
@@ -638,11 +658,10 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             const iconColor = hit ? 'text-success' : 'text-secondary';
             const pointBadge = hit ? `<span class="badge bg-success shadow-sm">+${pontos} pts</span>` : `<span class="badge bg-secondary shadow-sm opacity-50">+${pontos} pts</span>`;
             const checkIcon = hit ? '<i class="fa-solid fa-circle-check ms-1 text-success"></i>' : '';
-            const glowAchievement = hit ? 'glow-success' : '';
 
             return `
-                <div class="col-md-6 mb-3 animate-up">
-                    <div class="card h-100 border ${bgClass} shadow-sm ${glowAchievement}" style="transition: 0.3s;">
+                <div class="col-md-6 mb-3">
+                    <div class="card h-100 border ${bgClass} shadow-sm" style="transition: 0.3s;">
                         <div class="card-body p-3 d-flex align-items-center">
                             <div class="rounded-circle bg-white d-flex align-items-center justify-content-center border shadow-sm me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
                                 <i class="fa-solid ${icone} ${iconColor} fs-5"></i>
@@ -665,10 +684,10 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                     <div class="modal-content border-0 shadow-lg animate-modal">
                         <div class="modal-header bg-dark text-white border-0 d-flex align-items-center">
-                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-primary me-3 shadow-sm" style="object-fit: cover;">
+                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
                             <div>
-                                <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-primary me-2"></i> Conquistas de ${u.nome}</h5>
-                                <span class="badge bg-primary text-white mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos Totais</span>
+                                <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i> Conquistas de ${u.nome}</h5>
+                                <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span> Pontos Totais</span>
                             </div>
                             <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                         </div>
@@ -822,6 +841,65 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
 
         aplicarFiltros();
     });
+
+    // ANIMAÇÕES DE NÚMEROS E PROGRESSO (Acontece no onLoad)
+    setTimeout(function() {
+        const progressBar = document.querySelector('.progress-bar-animate');
+        const progressText = document.querySelector('.progress-text-animate');
+        if (progressBar && progressText) {
+            const targetWidth = parseFloat(progressBar.getAttribute('data-width')) || 0;
+            progressBar.style.width = targetWidth + '%';
+            progressBar.style.transition = 'width 1.5s cubic-bezier(0.22, 1, 0.36, 1)';
+            
+            let startTimestamp = null;
+            const duration = 1500;
+            const step = function(timestamp) {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 4);
+                const currentVal = (easeProgress * targetWidth).toFixed(1);
+                progressText.innerText = currentVal + '%';
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    progressText.innerText = targetWidth.toFixed(1) + '%';
+                }
+            };
+            window.requestAnimationFrame(step);
+        }
+
+        const counters = document.querySelectorAll('.counter-animate');
+        counters.forEach(function(counter) {
+            const target = parseFloat(counter.getAttribute('data-val')) || 0;
+            const isCurrency = counter.getAttribute('data-currency') === 'true';
+            const isPercent = counter.getAttribute('data-percent') === 'true';
+            const duration = 1500;
+            let startTimestamp = null;
+
+            const formatVal = function(val) {
+                if (isCurrency) return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                if (isPercent) return val.toFixed(1) + '%';
+                return Math.floor(val);
+            };
+
+            counter.innerText = formatVal(0);
+
+            const step = function(timestamp) {
+                if (!startTimestamp) startTimestamp = timestamp;
+                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                const easeProgress = 1 - Math.pow(1 - progress, 4);
+                const currentVal = easeProgress * target;
+                
+                counter.innerText = formatVal(currentVal);
+                if (progress < 1) {
+                    window.requestAnimationFrame(step);
+                } else {
+                    counter.innerText = formatVal(target);
+                }
+            };
+            window.requestAnimationFrame(step);
+        });
+    }, 100);
     </script>
 `);
 };
