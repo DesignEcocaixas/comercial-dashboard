@@ -108,7 +108,7 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
     </div>
 `;
 
-module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlobal, todosClientes = [], dadosMeta = {}) => {
+module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlobal, todosClientes = [], dadosMeta = {}, tutoriais = []) => {
 
     const ecoClientes = todosClientes.filter(c => c.setor === 'ecommerce');
     const indClientes = todosClientes.filter(c => c.setor === 'industria');
@@ -209,19 +209,50 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             /* ========================================= */
             /* EFEITO DE BRILHO DUPLO (KPIS BATIDOS)     */
             /* ========================================= */
+            
+            /* O Dark Theme sobrescrevia a borda, então garantimos que as cores apareçam */
+            .border-success { border-left-color: #198754 !important; }
+            .border-primary { border-left-color: #0d6efd !important; }
+
             @keyframes dualGlow {
                 0% { 
-                    box-shadow: 0 0 10px rgba(25, 135, 84, 0.5), 0 0 20px rgba(13, 202, 240, 0.3); 
-                    border-color: #198754 !important;
+                    box-shadow: 0 0 5px rgba(25, 135, 84, 0.4), 0 0 10px rgba(13, 202, 240, 0.2); 
                 }
                 100% { 
-                    box-shadow: 0 0 20px rgba(25, 135, 84, 0.9), 0 0 30px rgba(13, 202, 240, 0.7); 
-                    border-color: #0dcaf0 !important;
+                    box-shadow: 0 0 15px rgba(25, 135, 84, 0.9), 0 0 30px rgba(13, 202, 240, 0.8); 
                 }
             }
             .glow-success {
-                animation: dualGlow 2s infinite alternate !important;
+                animation: dualGlow 1.5s infinite alternate ease-in-out !important;
+                border-left-color: #0dcaf0 !important; /* Ciano brilhante para contrastar */
                 z-index: 1;
+                position: relative;
+            }
+
+            /* ========================================= */
+            /* BOTÃO FLUTUANTE DE TUTORIAIS              */
+            /* ========================================= */
+            .fab-tutorial {
+                position: fixed;
+                bottom: 30px;
+                right: 30px;
+                width: 60px;
+                height: 60px;
+                border-radius: 50%;
+                background-color: #0d6efd;
+                color: white;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 24px;
+                box-shadow: 0 4px 15px rgba(13, 110, 253, 0.4);
+                cursor: pointer;
+                z-index: 1040;
+                transition: 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }
+            .fab-tutorial:hover {
+                transform: scale(1.1) translateY(-5px);
+                background-color: #0b5ed7;
             }
         </style>
 
@@ -242,7 +273,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
                         return `
                         <div class="col-lg-4 col-md-12 mb-3 mb-lg-0 d-flex animate-up" style="animation-delay: 0.1s;">
-                            <div class="card shadow-sm border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative ${glowGlobal}">
+                            <div class="card shadow-sm border-start border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative ${glowGlobal}">
                                 <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                                 <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
                                     <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
@@ -559,7 +590,15 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     </div>
                 </div>
 
-            </div> </div> ${modalListaClientes('modalEco_sem_visita', 'E-commerce: Prospecção Sem Visita', ecoClientes.filter(c => c.prospeccao === 'sem_visita'))}
+            </div> 
+            
+            <div class="fab-tutorial" data-bs-toggle="modal" data-bs-target="#modalTutorialList" title="Tutoriais e Ajuda">
+                <i class="fa-solid fa-info"></i>
+            </div>
+            
+        </div> 
+
+    ${modalListaClientes('modalEco_sem_visita', 'E-commerce: Prospecção Sem Visita', ecoClientes.filter(c => c.prospeccao === 'sem_visita'))}
     ${modalListaClientes('modalEco_com_visita', 'E-commerce: Prospecção Com Visita', ecoClientes.filter(c => c.prospeccao === 'com_visita'))}
     ${modalListaClientes('modalEco_fechar', 'E-commerce: Novos Clientes', ecoClientes.filter(c => c.fechou === 'sim'))}
     ${modalListaClientes('modalEco_grande', 'E-commerce: Clientes Grandes', ecoClientes.filter(c => {
@@ -827,48 +866,63 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                 let hit = false;
                 let progresso = '';
                 if (type === 'global') { hit = globalHit; progresso = hit ? 'Meta Batida!' : 'Aguardando Equipe'; }
-                else if (type === 'percent') { hit = atual >= meta && meta > 0; progresso = `${atual.toFixed(1)}% / ${meta}%`; }
-                else { hit = atual >= meta && meta > 0; progresso = `${atual} / ${meta}`; }
+                else if (type === 'percent') { hit = atual >= meta && meta > 0; progresso = atual.toFixed(1) + '% / ' + meta + '%'; }
+                else { hit = atual >= meta && meta > 0; progresso = atual + ' / ' + meta; }
+                
                 const bgClass = hit ? 'bg-success-subtle border-success' : 'bg-light border-secondary-subtle';
                 const textClass = hit ? 'text-success' : 'text-muted';
                 const iconColor = hit ? 'text-success' : 'text-secondary';
-                const pointBadge = hit ? `<span class="badge bg-success shadow-sm">+${pontos} pts</span>` : `<span class="badge bg-secondary shadow-sm opacity-50">+${pontos} pts</span>`;
+                const pointBadge = hit ? '<span class="badge bg-success shadow-sm">+' + pontos + ' pts</span>' : '<span class="badge bg-secondary shadow-sm opacity-50">+' + pontos + ' pts</span>';
                 const glowAchievement = hit ? 'glow-success' : '';
-                return `<div class="col-md-6 mb-3 animate-up"><div class="card h-100 border ${bgClass} shadow-sm ${glowAchievement}"><div class="card-body p-3 d-flex align-items-center"><div class="rounded-circle bg-white d-flex align-items-center justify-content-center border shadow-sm me-3" style="width: 45px; height: 45px; flex-shrink: 0;"><i class="fa-solid ${icone} ${iconColor} fs-5"></i></div><div class="flex-grow-1"><h6 class="mb-1 fw-bold ${textClass}" style="font-size: 0.8rem;">${titulo} ${hit ? '<i class="fa-solid fa-circle-check ms-1 text-success"></i>' : ''}</h6><div class="small ${hit ? 'text-dark fw-medium' : 'text-muted'}" style="font-size: 0.75rem;">${progresso}</div></div><div class="ms-2">${pointBadge}</div></div></div></div>`;
+                const checkIcon = hit ? '<i class="fa-solid fa-circle-check ms-1 text-success"></i>' : '';
+                
+                return '<div class="col-md-6 mb-3 animate-up">' +
+                           '<div class="card h-100 border ' + bgClass + ' shadow-sm ' + glowAchievement + '">' +
+                               '<div class="card-body p-3 d-flex align-items-center">' +
+                                   '<div class="rounded-circle bg-white d-flex align-items-center justify-content-center border shadow-sm me-3" style="width: 45px; height: 45px; flex-shrink: 0;">' +
+                                       '<i class="fa-solid ' + icone + ' ' + iconColor + ' fs-5"></i>' +
+                                   '</div>' +
+                                   '<div class="flex-grow-1">' +
+                                       '<h6 class="mb-1 fw-bold ' + textClass + '" style="font-size: 0.8rem;">' + titulo + ' ' + checkIcon + '</h6>' +
+                                       '<div class="small ' + (hit ? 'text-dark fw-medium' : 'text-muted') + '" style="font-size: 0.75rem;">' + progresso + '</div>' +
+                                   '</div>' +
+                                   '<div class="ms-2">' + pointBadge + '</div>' +
+                               '</div>' +
+                           '</div>' +
+                       '</div>';
             };
 
-            conquistasHtml = `
-                <div class="modal fade" id="modalPontosUsuario${u.id}" tabindex="-1">
-                    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
-                        <div class="modal-content border-0 shadow-lg animate-modal">
-                            <div class="modal-header bg-dark text-white border-0 d-flex align-items-center">
-                                <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-primary me-3 shadow-sm" style="object-fit: cover;">
-                                <div><h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-primary me-2"></i> Conquistas: ${u.nome}</h5><span class="badge bg-primary mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos</span></div>
-                                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
-                            </div>
-                            <div class="modal-body p-4 bg-light-subtle row">
-                                ${achievementCard('Meta Global Equipe', 0, 0, 30, 'fa-earth-americas', 'global')}
-                                ${achievementCard('Prosp. Sem Visita', kpiSem, m_sem, 10, 'fa-phone')}
-                                ${achievementCard('Prosp. Com Visita', kpiCom, m_com, 30, 'fa-handshake')}
-                                ${achievementCard('Novos Clientes', kpiNovos, m_novos, 30, 'fa-user-check')}
-                                ${achievementCard('Cliente Grande', kpiGrande, m_grande, 20, 'fa-gem')}
-                                ${achievementCard('Pós-Venda', kpiPos, m_pos, 20, 'fa-headset')}
-                                ${achievementCard('Visitas Carteira', kpiVisita, m_visita, 20, 'fa-car')}
-                                ${achievementCard('Reativações', kpiReativ, m_reativ, 20, 'fa-rotate-right')}
-                                ${u.setor === 'ecommerce' ? achievementCard('Vendas Outras Regiões', kpiOutrasRegioes, m_outras, 20, 'fa-map-location-dot') : achievementCard('Taxa de Retenção', taxaInd, m_taxa, 20, 'fa-chart-pie', 'percent')}
-                            </div>
-                            <div class="modal-footer border-0 bg-light">
-                                <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
+            conquistasHtml = '<div class="modal fade" id="modalPontosUsuario' + u.id + '" tabindex="-1">' +
+                '<div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">' +
+                    '<div class="modal-content border-0 shadow-lg animate-modal">' +
+                        '<div class="modal-header bg-dark text-white border-0 d-flex align-items-center">' +
+                            '<img src="' + (u.foto || 'https://via.placeholder.com/40') + '" width="40" height="40" class="rounded-circle border border-2 border-primary me-3 shadow-sm" style="object-fit: cover;">' +
+                            '<div>' +
+                                '<h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-primary me-2"></i> Conquistas: ' + u.nome + '</h5>' +
+                                '<span class="badge bg-primary mt-1"><i class="fa-solid fa-star me-1"></i> ' + u.pontuacao + ' Pontos</span>' +
+                            '</div>' +
+                            '<button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>' +
+                        '</div>' +
+                        '<div class="modal-body p-4 bg-light-subtle row">' +
+                            achievementCard('Meta Global Equipe', 0, 0, 30, 'fa-earth-americas', 'global') +
+                            achievementCard('Prosp. Sem Visita', kpiSem, m_sem, 10, 'fa-phone') +
+                            achievementCard('Prosp. Com Visita', kpiCom, m_com, 30, 'fa-handshake') +
+                            achievementCard('Novos Clientes', kpiNovos, m_novos, 30, 'fa-user-check') +
+                            achievementCard('Cliente Grande', kpiGrande, m_grande, 20, 'fa-gem') +
+                            achievementCard('Pós-Venda', kpiPos, m_pos, 20, 'fa-headset') +
+                            achievementCard('Visitas Carteira', kpiVisita, m_visita, 20, 'fa-car') +
+                            achievementCard('Reativações', kpiReativ, m_reativ, 20, 'fa-rotate-right') +
+                            (u.setor === 'ecommerce' ? achievementCard('Vendas Outras Regiões', kpiOutrasRegioes, m_outras, 20, 'fa-map-location-dot') : achievementCard('Taxa de Retenção', taxaInd, m_taxa, 20, 'fa-chart-pie', 'percent')) +
+                        '</div>' +
+                        '<div class="modal-footer border-0 bg-light">' +
+                            '<button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>' +
+                        '</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
         }
 
-        return `
-        ${conquistasHtml}
-        ${u.tipo === 'vendedor' ? `
+        return conquistasHtml + `
         <div class="modal fade" id="modalMetasUsuario${u.id}" tabindex="-1">
             <div class="modal-dialog modal-lg modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg animate-modal">
@@ -891,14 +945,13 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             ${u.setor === 'industria' ? `<div class="col-md-6 mb-2"><label class="form-label small text-muted text-uppercase">Taxa Retenção (%)</label><input type="number" step="0.01" name="taxa_retencao" class="form-control" value="${u.taxa_retencao || 0}"></div>` : ''}
                         </div>
                         <div class="modal-footer border-0 bg-light">
-                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios">Cancelar</button>
                             <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-        ` : ''}
 
         <div class="modal fade" id="modalEditarUsuario${u.id}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
@@ -916,7 +969,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             </div>
                         </div>
                         <div class="modal-footer border-0 bg-light">
-                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios">Cancelar</button>
                             <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                         </div>
                     </form>
@@ -933,14 +986,14 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             <input type="hidden" name="id" value="${u.id}"><p class="text-dark">Excluir o usuário <strong>${u.nome}</strong>? Esta ação é irreversível.</p>
                         </div>
                         <div class="modal-footer border-0 bg-light">
-                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios">Cancelar</button>
                             <button type="submit" class="btn btn-dark fw-bold px-4">Excluir</button>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-    `;
+        `;
     }).join('')}
 
     ${todosClientes.map((c, index) => {
@@ -989,6 +1042,116 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <a id="btnDownloadFechamento" href="#" class="btn btn-success fw-bold py-2 shadow-sm" download><i class="fa-solid fa-download me-2"></i> Baixar Relatório do Ciclo</a>
                     <button type="button" class="btn btn-secondary fw-bold py-2" onclick="window.location.reload()">Voltar ao Painel</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalTutorialList" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg animate-modal">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-graduation-cap me-2 text-primary"></i> Tutoriais do Sistema</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto; overflow-x: hidden;">
+                    <button class="btn btn-primary fw-bold w-100 mb-4 py-2 shadow-sm" data-bs-toggle="modal" data-bs-target="#modalCriarTutorial" data-bs-dismiss="modal">
+                        <i class="fa-solid fa-plus-circle me-2"></i> Criar Novo Tutorial
+                    </button>
+                    
+                    <h6 class="text-muted small fw-bold text-uppercase mb-3">Tutoriais Disponíveis</h6>
+                    <div class="list-group">
+                        ${tutoriais && tutoriais.length > 0 ? tutoriais.map(t => `
+                            <div class="list-group-item bg-dark text-light border-secondary-subtle d-flex align-items-center mb-2 rounded shadow-sm">
+                                <button class="btn btn-link p-0 text-success me-3 text-decoration-none" onclick="abrirTutorial(${t.id}, '${t.titulo}')" data-bs-dismiss="modal">
+                                    <i class="fa-solid fa-play-circle fa-2x"></i>
+                                </button>
+                                <div class="text-start flex-grow-1" style="cursor:pointer;" onclick="abrirTutorial(${t.id}, '${t.titulo}')" data-bs-dismiss="modal">
+                                    <h6 class="mb-0 fw-bold">${t.titulo}</h6>
+                                    <small class="text-muted" style="font-size: 0.7rem;">${t.qtd_slides} slides</small>
+                                </div>
+                                <form action="/admin/tutorial/excluir" method="POST" class="m-0" onsubmit="return confirm('Tem certeza que deseja excluir este tutorial?')">
+                                    <input type="hidden" name="id" value="${t.id}">
+                                    <button type="submit" class="btn btn-sm btn-outline-danger border-0"><i class="fa-solid fa-trash"></i></button>
+                                </form>
+                            </div>
+                        `).join('') : '<div class="text-muted small text-center p-3">Nenhum tutorial criado ainda.</div>'}
+                    </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalVerTutorial" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg animate-modal">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h5 class="modal-title fw-bold" id="tituloTutorialVer"><i class="fa-solid fa-graduation-cap me-2 text-primary"></i> Tutorial</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body p-0 text-center" style="background: #0f0f0f; height: 65vh; display: flex; flex-direction: column; justify-content: center; position: relative;">
+                    
+                    <div id="carouselTutorial" class="carousel slide h-100 w-100" data-bs-ride="false" data-bs-wrap="false">
+                        <div class="carousel-inner h-100 d-flex align-items-center" id="carouselTutorialInner">
+                            </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselTutorial" data-bs-slide="prev" style="width: 50px;">
+                            <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                            <span class="visually-hidden">Anterior</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselTutorial" data-bs-slide="next" style="width: 50px;">
+                            <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                            <span class="visually-hidden">Próximo</span>
+                        </button>
+                    </div>
+
+                </div>
+                <div class="modal-footer border-0 bg-light justify-content-between">
+                    <button type="button" class="btn btn-outline-secondary fw-bold" data-bs-toggle="modal" data-bs-target="#modalTutorialList">Voltar à Lista</button>
+                    <button type="button" class="btn btn-dark fw-bold px-4" data-bs-dismiss="modal">Entendi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="modalCriarTutorial" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content border-0 shadow-lg animate-modal">
+                <form action="/admin/tutorial/criar" method="POST" enctype="multipart/form-data">
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-folder-plus me-2 text-primary"></i> Criar Tutorial</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4" style="max-height: 65vh; overflow-y: auto; overflow-x: hidden;">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Título do Tutorial</label>
+                        <input type="text" name="titulo" class="form-control form-control-lg mb-4 fw-bold text-primary" required placeholder="Ex: Passo a passo para reativar clientes">
+                        
+                        <div class="d-flex justify-content-between align-items-center mb-3 pb-2 border-bottom border-secondary-subtle">
+                            <h6 class="text-dark fw-bold mb-0"><i class="fa-regular fa-images me-2"></i>Slides do Tutorial</h6>
+                            <button type="button" class="btn btn-sm btn-outline-primary fw-bold" onclick="window.addSlideTutorial()">
+                                <i class="fa-solid fa-plus me-1"></i> Adicionar Slide
+                            </button>
+                        </div>
+                        
+                        <div id="slidesContainerTutorial">
+                            <div class="slide-item bg-light-subtle border border-secondary-subtle p-3 rounded-3 mb-3 shadow-sm animate-up">
+                                <div class="d-flex justify-content-between align-items-center mb-3">
+                                    <span class="badge bg-primary">SLIDE 1</span>
+                                </div>
+                                <label class="form-label text-muted small fw-bold text-uppercase">Imagem do Slide</label>
+                                <input type="file" name="slide_img" class="form-control mb-3" accept="image/*" required>
+                                <label class="form-label text-muted small fw-bold text-uppercase">Texto Explicativo</label>
+                                <textarea name="slide_texto" class="form-control" rows="2" placeholder="Descreva o que o vendedor deve fazer nesta etapa..." required></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-light justify-content-end gap-2">
+                        <button type="button" class="btn btn-outline-secondary fw-bold me-auto" data-bs-toggle="modal" data-bs-target="#modalTutorialList" data-bs-dismiss="modal"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar Tutorial</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
@@ -1072,6 +1235,57 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         }
         inputTexto.addEventListener('input', aplicarFiltros); aplicarFiltros();
     });
+
+    window.addSlideTutorial = function() {
+        var currentCount = document.querySelectorAll('#slidesContainerTutorial .slide-item').length + 1;
+        var container = document.getElementById('slidesContainerTutorial');
+        var div = document.createElement('div');
+        div.className = 'slide-item bg-light-subtle border border-secondary-subtle p-3 rounded-3 mb-3 shadow-sm animate-up';
+        div.innerHTML = 
+            '<div class="d-flex justify-content-between align-items-center mb-3">' +
+                '<span class="badge bg-primary">SLIDE ' + currentCount + '</span>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger py-1" onclick="this.parentElement.parentElement.remove()"><i class="fa-solid fa-trash me-1"></i> Remover</button>' +
+            '</div>' +
+            '<label class="form-label text-muted small fw-bold text-uppercase">Imagem do Slide</label>' +
+            '<input type="file" name="slide_img" class="form-control mb-3" accept="image/*" required>' +
+            '<label class="form-label text-muted small fw-bold text-uppercase">Texto Explicativo</label>' +
+            '<textarea name="slide_texto" class="form-control" rows="2" placeholder="Descreva o que o vendedor deve fazer nesta etapa..." required></textarea>';
+        container.appendChild(div);
+    };
+
+    window.abrirTutorial = async function(id, titulo) {
+        document.getElementById('tituloTutorialVer').innerHTML = '<i class="fa-solid fa-graduation-cap me-2 text-primary"></i> ' + titulo;
+        var inner = document.getElementById('carouselTutorialInner');
+        inner.innerHTML = '<div class="text-center w-100 p-5"><i class="fa-solid fa-spinner fa-spin fa-3x text-primary"></i></div>';
+        
+        new bootstrap.Modal(document.getElementById('modalVerTutorial')).show();
+
+        try {
+            var res = await fetch('/admin/tutorial/' + id + '/slides');
+            var slides = await res.json();
+            
+            if(slides.length === 0) {
+                inner.innerHTML = '<div class="p-5 text-muted w-100">Este tutorial não possui slides.</div>';
+                return;
+            }
+
+            var html = '';
+            slides.forEach(function(s, i) {
+                var active = i === 0 ? 'active' : '';
+                html += '<div class="carousel-item w-100 ' + active + '">' +
+                            '<div class="p-4 d-flex flex-column align-items-center justify-content-center" style="height: 100%;">' +
+                                '<img src="' + s.imagem_url + '" class="img-fluid rounded shadow mb-4" style="max-height: 40vh; object-fit: contain;">' +
+                                '<div class="bg-dark p-3 rounded border border-secondary-subtle" style="width: 80%;">' +
+                                    '<p class="text-light mb-0" style="font-size: 1rem;">' + s.texto + '</p>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>';
+            });
+            inner.innerHTML = html;
+        } catch(e) {
+            inner.innerHTML = '<div class="p-5 text-danger w-100">Erro ao carregar tutorial.</div>';
+        }
+    };
     </script>
     `);
 };

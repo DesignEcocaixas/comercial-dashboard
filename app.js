@@ -703,7 +703,91 @@ app.get('/admin', checarAuth, async (req, res) => {
         ORDER BY c.id DESC
     `);
 
-  res.send(adminView(req.session.usuario, usuarios, metasPorSetor, kpisPorSetor, metaGlobal, alcancadoGlobal, todosClientes));
+  // ==========================================
+  // BUSCA OS TUTORIAIS PARA EXIBIR NO PAINEL
+  // ==========================================
+  const [tutoriaisDb] = await db.query(`
+        SELECT t.*, COUNT(s.id) as qtd_slides 
+        FROM tutoriais t 
+        LEFT JOIN tutorial_slides s ON t.id = s.tutorial_id 
+        GROUP BY t.id 
+        ORDER BY t.data_criacao DESC
+  `);
+
+  // Enviamos todas as variáveis, garantindo que "dadosMeta" seja um objeto vazio {} para evitar erros, 
+  // e adicionando tutoriaisDb no final, conforme a estrutura do admin.js
+  res.send(adminView(
+      req.session.usuario, 
+      usuarios, 
+      metasPorSetor, 
+      kpisPorSetor, 
+      metaGlobal, 
+      alcancadoGlobal, 
+      todosClientes, 
+      {}, 
+      tutoriaisDb
+  ));
+});
+
+// ==========================================
+// ROTAS DE TUTORIAIS (SISTEMA DE AJUDA)
+// ==========================================
+
+// ==========================================
+// ROTAS DE TUTORIAIS (SISTEMA DE AJUDA)
+// ==========================================
+
+// Criar Tutorial
+app.post('/admin/tutorial/criar', checarAuth, upload.array('slide_img', 50), async (req, res) => {
+    if (req.session.usuario.tipo !== 'admin') return res.redirect('/vendedor');
+
+    const { titulo } = req.body;
+    let textos = req.body.slide_texto; // <-- Corrigido para ler sem os colchetes
+    const imagens = req.files; 
+
+    // Se faltar dados, volta sem salvar
+    if (!titulo || !textos) return res.redirect('/admin');
+
+    try {
+        // Se for enviado apenas 1 slide, transforma em array para o laço funcionar
+        if (!Array.isArray(textos)) textos = [textos];
+
+        const [resultado] = await db.query('INSERT INTO tutoriais (titulo) VALUES (?)', [titulo]);
+        const tutorialId = resultado.insertId; 
+
+        for (let i = 0; i < textos.length; i++) {
+            const textoSlide = textos[i];
+            const imagemUrl = imagens[i] ? '/uploads/' + imagens[i].filename : null;
+
+            if (imagemUrl && textoSlide) {
+                await db.query(
+                    'INSERT INTO tutorial_slides (tutorial_id, imagem_url, texto, ordem) VALUES (?, ?, ?, ?)',
+                    [tutorialId, imagemUrl, textoSlide, i + 1]
+                );
+            }
+        }
+        res.redirect('/admin');
+    } catch (error) {
+        console.error("ERRO GRAVE AO SALVAR TUTORIAL:", error); // Isso vai avisar no terminal se a tabela faltar
+        res.redirect('/admin');
+    }
+});
+
+// Excluir Tutorial
+app.post('/admin/tutorial/excluir', checarAuth, async (req, res) => {
+    if (req.session.usuario.tipo !== 'admin') return res.redirect('/vendedor');
+    await db.query('DELETE FROM tutoriais WHERE id = ?', [req.body.id]);
+    res.redirect('/admin');
+});
+
+// API para buscar os slides de um tutorial via AJAX
+app.get('/admin/tutorial/:id/slides', checarAuth, async (req, res) => {
+    try {
+        const [slides] = await db.query('SELECT * FROM tutorial_slides WHERE tutorial_id = ? ORDER BY ordem ASC', [req.params.id]);
+        res.json(slides);
+    } catch (error) {
+        res.status(500).json({ error: 'Erro ao buscar slides' });
+    }
 });
 
 // ==========================================
