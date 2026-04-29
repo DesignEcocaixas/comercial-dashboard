@@ -16,7 +16,9 @@ const formatarDataInput = (dataStr) => {
 const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId = '', formatarPercentual = false) => {
     const numAlcancado = Number(alcancado) || 0;
     const numMeta = Number(meta) || 0;
-    const cor = (numAlcancado >= numMeta && numMeta > 0) ? 'success' : 'primary';
+    const atingiu = (numAlcancado >= numMeta && numMeta > 0);
+    const cor = atingiu ? 'success' : 'primary';
+    const glowClass = atingiu ? 'glow-success' : '';
 
     let textoAlcancado = numAlcancado;
     let textoMeta = numMeta;
@@ -31,14 +33,16 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
 
     return `
         <div class="col-6 col-md-3 mb-3 animate-up">
-            <div class="card shadow-sm border-start border-${cor} border-4 h-100 kpi-card"
-                 ${modalId ? `data-bs-toggle="modal" data-bs-target="#${modalId}"` : ''} style="${modalId ? 'cursor: pointer;' : ''}">
+            <div class="card shadow-sm border-start border-${cor} border-4 h-100 kpi-card ${glowClass}"
+                 ${modalId ? `data-bs-toggle="modal" data-bs-target="#${modalId}"` : ''} style="${modalId ? 'cursor: pointer; transition: 0.2s;' : ''}">
                 <div class="card-body py-2 px-3 d-flex justify-content-between align-items-center">
-                    <div>
-                        <h6 class="text-muted mb-0" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;">${titulo}</h6>
-                        <span class="mb-0 fw-bold text-${cor}" style="font-size: 1.1rem;">${textoAlcancado} <span class="text-muted fw-normal" style="font-size: 0.85rem;">/ ${textoMeta}</span></span>
+                    <div style="min-width: 0; flex-grow: 1; padding-right: 2px;">
+                        <h6 class="text-muted mb-0 text-truncate" style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px;" title="${titulo}">${titulo}</h6>
+                        <div class="mb-0 fw-bold text-${cor}" style="font-size: 1.1rem; line-height: 1.2;">
+                            ${textoAlcancado} <span class="text-muted fw-normal d-inline-block" style="font-size: 0.85rem;">/ ${textoMeta}</span>
+                        </div>
                     </div>
-                    <div class="bg-light text-${cor} rounded-circle d-flex align-items-center justify-content-center" style="width: 40px; height: 40px;">
+                    <div class="bg-light text-${cor} rounded-circle d-flex align-items-center justify-content-center flex-shrink-0" style="width: 40px; height: 40px;">
                         <i class="fa-solid ${icone}" style="font-size: 1.1rem;"></i>
                     </div>
                 </div>
@@ -50,14 +54,14 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
 const modalListaClientes = (id, titulo, clientesFiltrados) => `
     <div class="modal fade" id="${id}" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
-            <div class="modal-content shadow-lg border-0 animate-modal">
-                <div class="modal-header bg-light border-0">
-                    <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-list me-2 text-primary"></i> ${titulo}</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            <div class="modal-content border-0 shadow-lg animate-modal">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-list me-2 text-primary"></i> ${titulo}</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
                     <div class="table-responsive">
-                        <table class="table table-hover align-middle mb-0" style="font-size: 0.9rem;">
+                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.9rem;">
                             <thead class="bg-white" style="position: sticky; top: 0; z-index: 1;">
                                 <tr>
                                     <th class="ps-3 py-3 border-0">Cliente</th>
@@ -80,6 +84,9 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
                             </tbody>
                         </table>
                     </div>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
                 </div>
             </div>
         </div>
@@ -112,16 +119,41 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             .kpi-card span { font-size: 0.9rem !important; }
         }
         
-        .animate-up { animation: fadeInUp 0.5s ease backwards; }
+        /* ========================================= */
+        /* ANIMAÇÕES DE ENTRADA (CARREGAMENTO)       */
+        /* ========================================= */
+        .animate-up { 
+            animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; 
+        }
         @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            0% { opacity: 0; transform: translateY(30px); }
+            100% { opacity: 1; transform: translateY(0); }
         }
         
-        .animate-modal { animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+        .animate-modal { 
+            animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; 
+        }
         @keyframes zoomIn {
-            from { opacity: 0; transform: scale(0.9); }
-            to { opacity: 1; transform: scale(1); }
+            0% { opacity: 0; transform: scale(0.95); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        /* ========================================= */
+        /* EFEITO DE BRILHO DUPLO (KPIS BATIDOS)     */
+        /* ========================================= */
+        @keyframes dualGlow {
+            0% { 
+                box-shadow: 0 0 10px rgba(25, 135, 84, 0.5), 0 0 20px rgba(13, 202, 240, 0.3); 
+                border-color: #198754 !important;
+            }
+            100% { 
+                box-shadow: 0 0 20px rgba(25, 135, 84, 0.9), 0 0 30px rgba(13, 202, 240, 0.7); 
+                border-color: #0dcaf0 !important;
+            }
+        }
+        .glow-success {
+            animation: dualGlow 2s infinite alternate !important;
+            z-index: 1;
         }
     </style>
 
@@ -133,7 +165,9 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                 ${(() => {
                     const vAlcancado = Number(alcancadoGlobal) || 0;
                     const vMeta = Number(metaGlobal) || 0;
-                    const corGlobal = (vAlcancado >= vMeta && vMeta > 0) ? 'success' : 'primary';
+                    const atingiuGlobal = (vAlcancado >= vMeta && vMeta > 0);
+                    const corGlobal = atingiuGlobal ? 'success' : 'primary';
+                    const glowGlobal = atingiuGlobal ? 'glow-success' : '';
                     const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
                     
                     const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
@@ -141,7 +175,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
 
                     return `
                     <div class="col-lg-4 col-md-12 mb-3 mb-lg-0 d-flex animate-up" style="animation-delay: 0.1s;">
-                        <div class="card shadow-sm border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative">
+                        <div class="card shadow-sm border-start border-${corGlobal} border-4 rounded-3 w-100 position-relative ${glowGlobal}">
                             
                             <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                             
@@ -361,7 +395,10 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content border-0 shadow-lg animate-modal">
                                                 <form action="/vendedor/cliente/editar" method="POST">
-                                                    <div class="modal-header bg-warning border-0"><h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-edit me-2"></i> Ajustar Registro</h5></div>
+                                                    <div class="modal-header bg-dark text-white border-0">
+                                                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-edit me-2 text-primary"></i> Ajustar Registro</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
                                                     <div class="modal-body p-4">
                                                         <input type="hidden" name="id" value="${c.id}">
                                                         <label class="form-label small text-muted">Nome do Cliente</label>
@@ -419,9 +456,9 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                                         <label class="form-label small text-muted">Observações (Opcional)</label>
                                                         <textarea name="observacao" class="form-control" rows="2" placeholder="Anotações extras...">${c.observacao || ''}</textarea>
                                                     </div>
-                                                    <div class="modal-footer border-0">
-                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">CANCELAR</button>
-                                                        <button type="submit" class="btn btn-warning fw-bold px-4">SALVAR MUDANÇAS</button>
+                                                    <div class="modal-footer border-0 bg-light">
+                                                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar Mudanças</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -432,15 +469,18 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                         <div class="modal-dialog modal-dialog-centered">
                                             <div class="modal-content border-0 shadow animate-modal">
                                                 <form action="/vendedor/cliente/excluir" method="POST">
-                                                    <div class="modal-header bg-danger text-white border-0"><h5 class="modal-title fw-bold"><i class="fa-solid fa-trash-can me-2"></i> REMOVER REGISTRO</h5></div>
+                                                    <div class="modal-header bg-dark text-white border-0">
+                                                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-trash-can me-2 text-danger"></i> Remover Registro</h5>
+                                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                                    </div>
                                                     <div class="modal-body p-4 text-center">
                                                         <input type="hidden" name="id" value="${c.id}">
                                                         <p>Excluir o cliente <strong>${c.nome}</strong>?</p>
                                                         <small class="text-danger fw-bold">Isso afetará sua pontuação imediatamente.</small>
                                                     </div>
-                                                    <div class="modal-footer border-0 justify-content-center">
-                                                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">NÃO, VOLTAR</button>
-                                                        <button type="submit" class="btn btn-danger px-5 fw-bold">SIM, EXCLUIR</button>
+                                                    <div class="modal-footer border-0 bg-light justify-content-end">
+                                                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                                                        <button type="submit" class="btn btn-dark fw-bold px-4">Excluir</button>
                                                     </div>
                                                 </form>
                                             </div>
@@ -471,7 +511,10 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
         <div class="modal-dialog modal-dialog-centered shadow-lg">
             <div class="modal-content border-0 animate-modal">
                 <form action="/vendedor/cliente" method="POST">
-                    <div class="modal-header bg-primary text-white border-0"><h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2"></i> Novo Registro Comercial</h5></div>
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2 text-primary"></i> Novo Registro Comercial</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
                     <div class="modal-body p-4">
                         <label class="form-label small text-muted">Nome da Empresa / Cliente</label>
                         <input type="text" name="nome" class="form-control mb-3" required placeholder="Ex: Pizzaria A">
@@ -530,9 +573,9 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                         <label class="form-label small text-muted">Observações (Opcional)</label>
                         <textarea name="observacao" class="form-control mb-2" rows="2" placeholder="Anotações extras sobre o cliente ou negociação..."></textarea>
                     </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">DESCARTAR</button>
-                        <button type="submit" class="btn btn-primary fw-bold px-4"><i class="fa-solid fa-check-circle me-1"></i> SALVAR E COMPUTAR</button>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                     </div>
                 </form>
             </div>
@@ -572,7 +615,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
         const m_outras = u.qtd_vendas_outras_regioes > 0 ? u.qtd_vendas_outras_regioes : defMeta.outras;
         const m_taxa = u.taxa_retencao > 0 ? u.taxa_retencao : defMeta.taxa;
 
-        const vAlcancadoGlobal = Number(alcancadoGlobal) || 0; // faturamento_manual já vem incluso de app.js
+        const vAlcancadoGlobal = Number(alcancadoGlobal) || 0; 
         const vMetaGlobal = Number(metaGlobal) || 0;
         const globalHit = (vMetaGlobal > 0 && vAlcancadoGlobal >= vMetaGlobal);
 
@@ -595,10 +638,11 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             const iconColor = hit ? 'text-success' : 'text-secondary';
             const pointBadge = hit ? `<span class="badge bg-success shadow-sm">+${pontos} pts</span>` : `<span class="badge bg-secondary shadow-sm opacity-50">+${pontos} pts</span>`;
             const checkIcon = hit ? '<i class="fa-solid fa-circle-check ms-1 text-success"></i>' : '';
+            const glowAchievement = hit ? 'glow-success' : '';
 
             return `
-                <div class="col-md-6 mb-3">
-                    <div class="card h-100 border ${bgClass} shadow-sm" style="transition: 0.3s;">
+                <div class="col-md-6 mb-3 animate-up">
+                    <div class="card h-100 border ${bgClass} shadow-sm ${glowAchievement}" style="transition: 0.3s;">
                         <div class="card-body p-3 d-flex align-items-center">
                             <div class="rounded-circle bg-white d-flex align-items-center justify-content-center border shadow-sm me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
                                 <i class="fa-solid ${icone} ${iconColor} fs-5"></i>
@@ -621,10 +665,10 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                 <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                     <div class="modal-content border-0 shadow-lg animate-modal">
                         <div class="modal-header bg-dark text-white border-0 d-flex align-items-center">
-                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
+                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-primary me-3 shadow-sm" style="object-fit: cover;">
                             <div>
-                                <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i> Conquistas de ${u.nome}</h5>
-                                <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos Totais</span>
+                                <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-primary me-2"></i> Conquistas de ${u.nome}</h5>
+                                <span class="badge bg-primary text-white mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos Totais</span>
                             </div>
                             <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                         </div>

@@ -16,7 +16,9 @@ const formatarData = (dataStr) => {
 const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId = '', formatarPercentual = false, isSmall = false) => {
     const numAlcancado = Number(alcancado) || 0;
     const numMeta = Number(meta) || 0;
-    const cor = (numAlcancado >= numMeta && numMeta > 0) ? 'success' : 'primary';
+    const atingiu = (numAlcancado >= numMeta && numMeta > 0);
+    const cor = atingiu ? 'success' : 'primary';
+    const glowClass = atingiu ? 'glow-success' : '';
 
     let textoAlcancado = numAlcancado;
     let textoMeta = numMeta;
@@ -43,7 +45,7 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
 
     return `
         <div class="${colClass} animate-up">
-            <div class="card shadow-sm border-start border-${cor} ${borderSize} h-100 kpi-card"
+            <div class="card shadow-sm border-start border-${cor} ${borderSize} h-100 kpi-card ${glowClass}"
                  ${modalId ? `data-bs-toggle="modal" data-bs-target="#${modalId}"` : ''} style="${modalId ? 'cursor: pointer; transition: 0.2s;' : ''}" onmouseover="this.classList.add('bg-light')" onmouseout="this.classList.remove('bg-light')">
                 
                 <div class="card-body ${paddingClass} d-flex justify-content-between align-items-center gap-1">
@@ -67,11 +69,11 @@ const kpiCard = (titulo, alcancado, meta, icone, formatarMoeda = false, modalId 
 
 const modalListaClientes = (id, titulo, clientesFiltrados) => `
     <div class="modal fade" id="${id}" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-scrollable">
-            <div class="modal-content">
-                <div class="modal-header bg-light">
-                    <h6 class="modal-title fw-bold text-dark"><i class="fa-solid fa-list me-2"></i> ${titulo}</h6>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-dialog modal-lg modal-dialog-scrollable modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg animate-modal">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h6 class="modal-title fw-bold"><i class="fa-solid fa-list me-2 text-primary"></i> ${titulo}</h6>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0">
                     <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.85rem;">
@@ -97,6 +99,9 @@ const modalListaClientes = (id, titulo, clientesFiltrados) => `
                             `).join('') : `<tr><td colspan="4" class="text-center text-muted py-4">Nenhum cliente compõe este indicador.</td></tr>`}
                         </tbody>
                     </table>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
                 </div>
             </div>
         </div>
@@ -131,7 +136,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         const kpiVendas = clientesU.filter(c => c.fechou === 'sim').reduce((acc, c) => acc + Number(c.valor_venda), 0) + Number(u.faturamento_manual || 0);
         const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
         const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
-        const kpiReativ = clientesU.filter(c => c.parado === 'sim').length;
+        const kpiReativ = clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim').length;
         const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
         const kpiFidel = clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim').length;
 
@@ -181,6 +186,43 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         <style>
             .container-70 { width: 95%; max-width: 1600px; margin: 0 auto; }
             @media (max-width: 768px) { .container-70 { width: 98%; } }
+
+            /* ========================================= */
+            /* ANIMAÇÕES DE ENTRADA (CARREGAMENTO)       */
+            /* ========================================= */
+            .animate-up { 
+                animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards; 
+            }
+            @keyframes fadeInUp {
+                0% { opacity: 0; transform: translateY(30px); }
+                100% { opacity: 1; transform: translateY(0); }
+            }
+            
+            .animate-modal { 
+                animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) backwards; 
+            }
+            @keyframes zoomIn {
+                0% { opacity: 0; transform: scale(0.95); }
+                100% { opacity: 1; transform: scale(1); }
+            }
+
+            /* ========================================= */
+            /* EFEITO DE BRILHO DUPLO (KPIS BATIDOS)     */
+            /* ========================================= */
+            @keyframes dualGlow {
+                0% { 
+                    box-shadow: 0 0 10px rgba(25, 135, 84, 0.5), 0 0 20px rgba(13, 202, 240, 0.3); 
+                    border-color: #198754 !important;
+                }
+                100% { 
+                    box-shadow: 0 0 20px rgba(25, 135, 84, 0.9), 0 0 30px rgba(13, 202, 240, 0.7); 
+                    border-color: #0dcaf0 !important;
+                }
+            }
+            .glow-success {
+                animation: dualGlow 2s infinite alternate !important;
+                z-index: 1;
+            }
         </style>
 
         <div class="main-content-wrapper">
@@ -191,17 +233,19 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     ${(() => {
                         const vAlcancado = (Number(alcancadoGlobal) || 0) + somaManualTotal;
                         const vMeta = Number(metaGlobal) || 0;
-                        const corGlobal = (vAlcancado >= vMeta && vMeta > 0) ? 'success' : 'primary';
+                        const atingiuGlobal = (vAlcancado >= vMeta && vMeta > 0);
+                        const corGlobal = atingiuGlobal ? 'success' : 'primary';
+                        const glowGlobal = atingiuGlobal ? 'glow-success' : '';
                         const porcentagem = vMeta > 0 ? Math.min((vAlcancado / vMeta) * 100, 100) : 0;
                         const mesAtual = new Date().toLocaleString('pt-BR', { month: 'long' });
                         const mesNome = mesAtual.charAt(0).toUpperCase() + mesAtual.slice(1);
 
                         return `
                         <div class="col-lg-4 col-md-12 mb-3 mb-lg-0 d-flex animate-up" style="animation-delay: 0.1s;">
-                            <div class="card shadow-sm border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative">
+                            <div class="card shadow-sm border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative ${glowGlobal}">
                                 <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                                 <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral</h6>
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
                                     <div class="progress mb-3" style="height: 18px; border-radius: 20px; border: 1px solid #e0e0e0; overflow: hidden;">
                                         <div class="progress-bar bg-${corGlobal} progress-bar-striped progress-bar-animated" role="progressbar" style="width: ${porcentagem}%; font-size: 0.75rem; font-weight: bold;">
                                              ${porcentagem.toFixed(1)}%
@@ -239,7 +283,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                 <td class="ps-3 py-2">
                                                     <div class="d-flex align-items-center">
                                                         <div class="position-relative me-2">
-                                                            <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
+                                                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
                                                             ${index === 0 ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.55rem;"><i class="fa-solid fa-crown"></i></span>' : ''}
                                                         </div>
                                                         <div class="d-flex flex-column">
@@ -282,7 +326,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                 <tr style="cursor: pointer; transition: 0.2s;" onmouseover="this.classList.add('bg-light')" onmouseout="this.classList.remove('bg-light')" data-bs-toggle="modal" data-bs-target="#modalFaturamentoManual${u.id}" title="Ajustar Faturamento Manualmente">
                                                     <td class="ps-3 py-2">
                                                         <div class="d-flex align-items-center">
-                                                            <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
+                                                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
                                                             <span class="fw-bold text-dark" style="font-size: 0.85rem;">${u.nome}</span>
                                                         </div>
                                                     </td>
@@ -300,54 +344,67 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
                 </div>
 
-                <div class="row mb-4 align-items-stretch">
-                    <div class="col-xl-6 mb-3 mb-xl-0 d-flex animate-up" style="animation-delay: 0.4s;">
-                        <div class="card shadow-sm rounded-3 border w-100">
-                            <div class="card-header bg-white text-primary fw-bold py-2 border-0" style="font-size: 0.9rem;">
-                                <i class="fa-solid fa-chart-line me-2"></i> E-Commerce (Soma da Equipe)
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="card shadow-sm rounded-3 border animate-up" style="animation-delay: 0.4s;">
+                            <div class="card-header bg-white border-0 pt-3 pb-0">
+                                <ul class="nav nav-pills nav-fill bg-light rounded-2 p-1" id="pills-tab" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active py-2 fw-bold text-uppercase" id="tab-ecommerce" data-bs-toggle="pill" data-bs-target="#content-ecommerce" type="button" role="tab" style="font-size: 0.85rem; letter-spacing: 1px;">
+                                            <i class="fa-solid fa-cart-shopping me-2"></i>E-Commerce (Equipe)
+                                        </button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link py-2 fw-bold text-uppercase" id="tab-industria" data-bs-toggle="pill" data-bs-target="#content-industria" type="button" role="tab" style="font-size: 0.85rem; letter-spacing: 1px;">
+                                            <i class="fa-solid fa-building me-2"></i>Indústria (Equipe)
+                                        </button>
+                                    </li>
+                                </ul>
                             </div>
-                            <div class="card-body pb-1 bg-light px-2 pt-3">
-                                <div class="row mx-0 px-0 g-2">
-                                    ${kpiCard('S/ Visita', sumEcoKpi.sem, sumEcoMeta.sem, 'fa-phone', false, 'modalEco_sem_visita', false, true)}
-                                    ${kpiCard('C/ Visita', sumEcoKpi.com, sumEcoMeta.com, 'fa-handshake', false, 'modalEco_com_visita', false, true)}
-                                    ${kpiCard('Novos Cli.', sumEcoKpi.novos, sumEcoMeta.novos, 'fa-user-check', false, 'modalEco_fechar', false, true)}
-                                    ${kpiCard('Cli. Grande', sumEcoKpi.grande, sumEcoMeta.grande, 'fa-gem', false, 'modalEco_grande', false, true)}
-                                    ${kpiCard('Vendas', sumEcoKpi.vendas, sumEcoMeta.vendas, 'fa-sack-dollar', true, 'modalEco_vendas', false, true)}
-                                    ${kpiCard('Pós-Venda', sumEcoKpi.pos, sumEcoMeta.pos, 'fa-headset', false, 'modalEco_pos_venda', false, true)}
-                                    ${kpiCard('Visita Cart.', sumEcoKpi.visita, sumEcoMeta.visita, 'fa-car', false, 'modalEco_visita', false, true)}
-                                    ${kpiCard('Reativações', sumEcoKpi.reativ, sumEcoMeta.reativ, 'fa-rotate-right', false, 'modalEco_reativacao', false, true)}
+                            
+                            <div class="tab-content" id="pills-tabContent">
+                                <div class="tab-pane fade show active" id="content-ecommerce" role="tabpanel">
+                                    <div class="card-body bg-white px-3 pt-4 pb-2">
+                                        <div class="row mx-0">
+                                            ${kpiCard('Prosp. S/ Visita', sumEcoKpi.sem, sumEcoMeta.sem, 'fa-phone', false, 'modalEco_sem_visita')}
+                                            ${kpiCard('Prosp. C/ Visita', sumEcoKpi.com, sumEcoMeta.com, 'fa-handshake', false, 'modalEco_com_visita')}
+                                            ${kpiCard('Novos Clientes', sumEcoKpi.novos, sumEcoMeta.novos, 'fa-user-check', false, 'modalEco_fechar')}
+                                            ${kpiCard('QTD Cli. Grande', sumEcoKpi.grande, sumEcoMeta.grande, 'fa-gem', false, 'modalEco_grande')}
+                                            ${kpiCard('Faturamento Total', sumEcoKpi.vendas, sumEcoMeta.vendas, 'fa-sack-dollar', true, 'modalEco_vendas')}
+                                            ${kpiCard('Pós-Venda Feito', sumEcoKpi.pos, sumEcoMeta.pos, 'fa-headset', false, 'modalEco_pos_venda')}
+                                            ${kpiCard('Visitas Carteira', sumEcoKpi.visita, sumEcoMeta.visita, 'fa-car', false, 'modalEco_visita')}
+                                            ${kpiCard('Reativações', sumEcoKpi.reativ, sumEcoMeta.reativ, 'fa-rotate-right', false, 'modalEco_reativacao')}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="col-xl-6 d-flex animate-up" style="animation-delay: 0.4s;">
-                        <div class="card shadow-sm rounded-3 border w-100">
-                            <div class="card-header bg-white text-warning fw-bold py-2 border-0" style="font-size: 0.9rem;">
-                                <i class="fa-solid fa-building text-warning me-2"></i> Indústria (Soma da Equipe)
-                            </div>
-                            <div class="card-body pb-1 bg-light px-2 pt-3">
-                                <div class="row mx-0 px-0 g-2">
-                                    ${kpiCard('S/ Visita', sumIndKpi.sem, sumIndMeta.sem, 'fa-phone', false, 'modalInd_sem_visita', false, true)}
-                                    ${kpiCard('C/ Visita', sumIndKpi.com, sumIndMeta.com, 'fa-handshake', false, 'modalInd_com_visita', false, true)}
-                                    ${kpiCard('Novos Cli.', sumIndKpi.novos, sumIndMeta.novos, 'fa-user-check', false, 'modalInd_fechar', false, true)}
-                                    ${kpiCard('Cli. Grande', sumIndKpi.grande, sumIndMeta.grande, 'fa-gem', false, 'modalInd_grande', false, true)}
-                                    ${kpiCard('Vendas', sumIndKpi.vendas, sumIndMeta.vendas, 'fa-sack-dollar', true, 'modalInd_vendas', false, true)}
-                                    ${kpiCard('Pós-Venda', sumIndKpi.pos, sumIndMeta.pos, 'fa-headset', false, 'modalInd_pos_venda', false, true)}
-                                    ${kpiCard('Visita Cart.', sumIndKpi.visita, sumIndMeta.visita, 'fa-car', false, 'modalInd_visita', false, true)}
-                                    ${kpiCard('Reativações', sumIndKpi.reativ, sumIndMeta.reativ, 'fa-rotate-right', false, 'modalInd_reativacao', false, true)}
-                                    ${kpiCard('Retenção', taxaAlcancadaInd, taxaMetaInd, 'fa-chart-pie', false, 'modalInd_retencao', true, true)}
+                                <div class="tab-pane fade" id="content-industria" role="tabpanel">
+                                    <div class="card-body bg-white px-3 pt-4 pb-2">
+                                        <div class="row mx-0">
+                                            ${kpiCard('Prosp. S/ Visita', sumIndKpi.sem, sumIndMeta.sem, 'fa-phone', false, 'modalInd_sem_visita')}
+                                            ${kpiCard('Prosp. C/ Visita', sumIndKpi.com, sumIndMeta.com, 'fa-handshake', false, 'modalInd_com_visita')}
+                                            ${kpiCard('Novos Clientes', sumIndKpi.novos, sumIndMeta.novos, 'fa-user-check', false, 'modalInd_fechar')}
+                                            ${kpiCard('QTD Cli. Grande', sumIndKpi.grande, sumIndMeta.grande, 'fa-gem', false, 'modalInd_grande')}
+                                            ${kpiCard('Faturamento Total', sumIndKpi.vendas, sumIndMeta.vendas, 'fa-sack-dollar', true, 'modalInd_vendas')}
+                                            ${kpiCard('Pós-Venda Feito', sumIndKpi.pos, sumIndMeta.pos, 'fa-headset', false, 'modalInd_pos_venda')}
+                                            ${kpiCard('Visitas Carteira', sumIndKpi.visita, sumIndMeta.visita, 'fa-car', false, 'modalInd_visita')}
+                                            ${kpiCard('Reativações', sumIndKpi.reativ, sumIndMeta.reativ, 'fa-rotate-right', false, 'modalInd_reativacao')}
+                                            ${kpiCard('Taxa de Retenção', taxaAlcancadaInd, taxaMetaInd, 'fa-chart-pie', false, 'modalInd_retencao', true)}
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
-                <div class="d-flex align-items-center mb-3 mt-5 animate-up">
+
+                <div class="d-flex align-items-center mb-3 mt-5 animate-up" style="animation-delay: 0.45s;">
                     <h5 class="fw-bold text-dark mb-0"><i class="fa-solid fa-user-tie text-primary me-2"></i>Métricas Individuais por Vendedor</h5>
                     <div class="border-bottom flex-grow-1 ms-3"></div>
                 </div>
 
-                ${usuarios.filter(u => u.tipo === 'vendedor').map(u => {
+                ${usuarios.filter(u => u.tipo === 'vendedor').map((u, index) => {
+                    const delay = 0.5 + (index * 0.1);
                     const clientesU = todosClientes.filter(c => c.vendedor_id === u.id);
                     const kpiSem = clientesU.filter(c => c.prospeccao === 'sem_visita').length;
                     const kpiCom = clientesU.filter(c => c.prospeccao === 'com_visita').length;
@@ -363,10 +420,10 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     const taxaInd = kpiCarteira > 0 ? (kpiFidel / kpiCarteira) * 100 : 0;
 
                     return `
-                    <div class="card shadow-sm rounded-3 border mb-4 animate-up">
+                    <div class="card shadow-sm rounded-3 border mb-4 animate-up" style="animation-delay: ${delay}s;">
                         <div class="card-header bg-white text-dark fw-bold py-3 border-0 d-flex justify-content-between align-items-center" style="font-size: 0.95rem;">
                             <div class="d-flex align-items-center">
-                                <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="35" height="35" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
+                                <img src="${u.foto || 'https://via.placeholder.com/40'}" width="35" height="35" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
                                 <span class="me-2">${u.nome}</span>
                                 <span class="badge bg-${u.setor === 'ecommerce' ? 'primary' : 'warning text-dark'} text-uppercase" style="font-size: 0.65rem;">${u.setor}</span>
                             </div>
@@ -400,7 +457,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     ${u.setor === 'industria' ? modalListaClientes(`modalIndiv_retencao_${u.id}`, `Clientes Fidelizados: ${u.nome}`, clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim')) : ''}
                     `;
                 }).join('')}
-                <div class="card shadow-sm rounded-3 border mb-5 animate-up" style="animation-delay: 0.5s;">
+                <div class="card shadow-sm rounded-3 border mb-5 animate-up" style="animation-delay: 1s;">
                     <div class="card-header bg-white py-3 border-0 d-flex flex-column gap-3">
                         <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3">
                             <div class="d-flex align-items-center w-100">
@@ -530,79 +587,110 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     ${modalListaClientes('modalInd_retencao', 'Indústria: Clientes Fidelizados (Recorrência)', indClientes.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim'))}
 
     <div class="modal fade" id="modalUsuario" tabindex="-1">
-        <div class="modal-dialog">
-            <div class="modal-content">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg animate-modal">
                 <form action="/admin/usuario" method="POST" enctype="multipart/form-data">
-                    <div class="modal-header"><h5 class="modal-title"><i class="fa-solid fa-user-plus me-2"></i> Novo Usuário</h5></div>
-                    <div class="modal-body">
-                        <input type="text" name="nome" class="form-control mb-2" placeholder="Nome completo" required>
-                        <input type="text" name="token" class="form-control mb-2" placeholder="Token de Acesso" required>
-                        <label class="form-label small text-muted mb-0 mt-2">Foto de Perfil</label>
-                        <input type="file" name="foto" class="form-control mb-3" accept="image/png, image/jpeg, image/jpg">
-                        <select name="tipo" class="form-select mb-2"><option value="vendedor">Vendedor</option><option value="admin">Administrador</option></select>
-                        <select name="setor" class="form-select mb-2"><option value="ecommerce">E-commerce</option><option value="industria">Indústria</option><option value="admin">Admin (Geral)</option></select>
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-user-plus me-2 text-primary"></i> Novo Usuário</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-primary"><i class="fa-solid fa-check me-1"></i> Salvar</button></div>
+                    <div class="modal-body p-4">
+                        <label class="form-label text-muted small fw-bold text-uppercase">Nome completo</label>
+                        <input type="text" name="nome" class="form-control mb-3" required>
+                        
+                        <label class="form-label text-muted small fw-bold text-uppercase">Token de Acesso</label>
+                        <input type="text" name="token" class="form-control mb-3" required>
+                        
+                        <label class="form-label text-muted small fw-bold text-uppercase">Foto de Perfil</label>
+                        <input type="file" name="foto" class="form-control mb-3" accept="image/png, image/jpeg, image/jpg">
+                        
+                        <div class="row">
+                            <div class="col-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Tipo</label>
+                                <select name="tipo" class="form-select mb-3"><option value="vendedor">Vendedor</option><option value="admin">Administrador</option></select>
+                            </div>
+                            <div class="col-6">
+                                <label class="form-label text-muted small fw-bold text-uppercase">Setor</label>
+                                <select name="setor" class="form-select mb-3"><option value="ecommerce">E-commerce</option><option value="industria">Indústria</option><option value="admin">Admin (Geral)</option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
     <div class="modal fade" id="modalMetasEco" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg animate-modal">
                 <form action="/admin/metas" method="POST">
-                    <div class="modal-header bg-primary text-white"><h5 class="modal-title"><i class="fa-solid fa-bullseye me-2"></i> Lançar Metas (E-commerce)</h5></div>
-                    <div class="modal-body row">
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-bullseye me-2 text-primary"></i> Metas Gerais: E-commerce</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 row">
                         <input type="hidden" name="setor" value="ecommerce">
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label small text-muted mb-0">Meta E-commerce (R$)</label>
-                            <input type="text" name="meta_geral" class="form-control mascara-moeda" value="${metas.ecommerce?.meta_geral || 0}">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Meta Faturamento (R$)</label>
+                            <input type="text" name="meta_geral" class="form-control fw-bold text-success mascara-moeda" value="${metas.ecommerce?.meta_geral || 0}">
                         </div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp sem visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${metas.ecommerce?.qtd_prosp_sem_visita || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp com visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${metas.ecommerce?.qtd_prosp_com_visita || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.ecommerce?.qtd_clientes_fechar || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Cliente Grande (>5k)</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${metas.ecommerce?.qtd_cliente_grande || 0}"></div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label small text-muted mb-0">Valor Total Cliente Grande (R$)</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Valor Cliente Grande (R$)</label>
                             <input type="text" name="valor_cliente_grande" class="form-control mascara-moeda" value="${metas.ecommerce?.valor_cliente_grande || 0}">
                         </div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Pós venda feito</label><input type="number" name="qtd_pos_venda" class="form-control" value="${metas.ecommerce?.qtd_pos_venda || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Visitas carteira</label><input type="number" name="qtd_visitas_carteira" class="form-control" value="${metas.ecommerce?.qtd_visitas_carteira || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${metas.ecommerce?.qtd_reativacoes || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">Vendas Outras Regiões</label><input type="number" name="qtd_vendas_outras_regioes" class="form-control" value="${metas.ecommerce?.qtd_vendas_outras_regioes || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Prosp. S/ Visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${metas.ecommerce?.qtd_prosp_sem_visita || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Prosp. C/ Visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${metas.ecommerce?.qtd_prosp_com_visita || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.ecommerce?.qtd_clientes_fechar || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">QTD Cli. Grande</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${metas.ecommerce?.qtd_cliente_grande || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Pós-Venda</label><input type="number" name="qtd_pos_venda" class="form-control" value="${metas.ecommerce?.qtd_pos_venda || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Visita Cart.</label><input type="number" name="qtd_visitas_carteira" class="form-control" value="${metas.ecommerce?.qtd_visitas_carteira || 0}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label small text-muted text-uppercase">Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${metas.ecommerce?.qtd_reativacoes || 0}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label small text-muted text-uppercase">Bônus Região</label><input type="number" name="qtd_vendas_outras_regioes" class="form-control" value="${metas.ecommerce?.qtd_vendas_outras_regioes || 0}"></div>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-success"><i class="fa-solid fa-check me-1"></i> Salvar</button></div>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
+                    </div>
                 </form>
             </div>
         </div>
     </div>
 
     <div class="modal fade" id="modalMetasInd" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg animate-modal">
                 <form action="/admin/metas" method="POST">
-                    <div class="modal-header bg-warning text-dark"><h5 class="modal-title"><i class="fa-solid fa-bullseye me-2"></i> Lançar Metas (Indústria)</h5></div>
-                    <div class="modal-body row">
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-bullseye me-2 text-primary"></i> Metas Gerais: Indústria</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body p-4 row">
                         <input type="hidden" name="setor" value="industria">
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label small text-muted mb-0">Meta Indústria (R$)</label>
-                            <input type="text" name="meta_geral" class="form-control mascara-moeda" value="${metas.industria?.meta_geral || 0}">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Meta Faturamento (R$)</label>
+                            <input type="text" name="meta_geral" class="form-control fw-bold text-success mascara-moeda" value="${metas.industria?.meta_geral || 0}">
                         </div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp sem visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${metas.industria?.qtd_prosp_sem_visita || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp com visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${metas.industria?.qtd_prosp_com_visita || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.industria?.qtd_clientes_fechar || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Cliente Grande (>15k)</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${metas.industria?.qtd_cliente_grande || 0}"></div>
-                        <div class="col-md-6 mb-2">
-                            <label class="form-label small text-muted mb-0">Valor Total Cliente Grande (R$)</label>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label text-muted small fw-bold text-uppercase">Valor Cliente Grande (R$)</label>
                             <input type="text" name="valor_cliente_grande" class="form-control mascara-moeda" value="${metas.industria?.valor_cliente_grande || 0}">
                         </div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Pós venda feito</label><input type="number" name="qtd_pos_venda" class="form-control" value="${metas.industria?.qtd_pos_venda || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Visitas carteira</label><input type="number" name="qtd_visitas_carteira" class="form-control" value="${metas.industria?.qtd_visitas_carteira || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${metas.industria?.qtd_reativacoes || 0}"></div>
-                        <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">Taxa de Retenção (%)</label><input type="number" step="0.01" name="taxa_retencao" class="form-control" value="${metas.industria?.taxa_retencao || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Prosp. S/ Visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${metas.industria?.qtd_prosp_sem_visita || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Prosp. C/ Visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${metas.industria?.qtd_prosp_com_visita || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${metas.industria?.qtd_clientes_fechar || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">QTD Cli. Grande</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${metas.industria?.qtd_cliente_grande || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Pós-Venda</label><input type="number" name="qtd_pos_venda" class="form-control" value="${metas.industria?.qtd_pos_venda || 0}"></div>
+                        <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Visita Cart.</label><input type="number" name="qtd_visitas_carteira" class="form-control" value="${metas.industria?.qtd_visitas_carteira || 0}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label small text-muted text-uppercase">Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${metas.industria?.qtd_reativacoes || 0}"></div>
+                        <div class="col-md-6 mb-2"><label class="form-label small text-muted text-uppercase">Taxa Retenção (%)</label><input type="number" step="0.01" name="taxa_retencao" class="form-control" value="${metas.industria?.taxa_retencao || 0}"></div>
                     </div>
-                    <div class="modal-footer"><button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar</button></div>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
+                    </div>
                 </form>
             </div>
         </div>
@@ -613,7 +701,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             <div class="modal-content border-0 shadow-lg animate-modal">
                 <form action="/admin/meta-global" method="POST">
                     <div class="modal-header bg-dark text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-globe me-2"></i> Definir Metas da Empresa</h5>
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-globe me-2 text-primary"></i> Definir Metas da Empresa</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4">
@@ -632,12 +720,11 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                     <input type="text" name="alcancado" class="form-control border-secondary-subtle text-success fw-bold mascara-moeda" value="${dadosMeta.alcancado || 0}">
                                 </div>
                             </div>
-                            <small class="text-muted d-block mt-2" style="font-size: 0.7rem;"><i class="fa-solid fa-circle-info me-1"></i> Valores independentes da tabela geral.</small>
                         </div>
                     </div>
                     <div class="modal-footer border-0 bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-check me-1"></i> Salvar</button>
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                     </div>
                 </form>
             </div>
@@ -649,26 +736,22 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg animate-modal">
                 <form action="/admin/faturamento-manual" method="POST">
-                    <div class="modal-header bg-success text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-sack-dollar me-2"></i> Ajuste Manual de Faturamento</h5>
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-sack-dollar me-2 text-primary"></i> Ajuste de Faturamento</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4">
                         <input type="hidden" name="vendedor_id" value="${u.id}">
                         <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                            <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="50" height="50" class="rounded-circle border me-3 shadow-sm" style="object-fit: cover;">
-                            <div>
-                                <h6 class="fw-bold text-dark mb-0">${u.nome}</h6>
-                                <span class="text-muted small text-uppercase">${u.setor}</span>
-                            </div>
+                            <img src="${u.foto || 'https://via.placeholder.com/40'}" width="50" height="50" class="rounded-circle border me-3 shadow-sm" style="object-fit: cover;">
+                            <div><h6 class="fw-bold text-dark mb-0">${u.nome}</h6><span class="text-muted small text-uppercase">${u.setor}</span></div>
                         </div>
                         <label class="form-label text-muted small fw-bold text-uppercase">Adicionar Faturamento Base (R$)</label>
-                        <p class="small text-muted mb-3">Este valor soma no faturamento do vendedor, afetando sua meta e a Meta Global.</p>
-                        <input type="text" name="faturamento_manual" class="form-control form-control-lg mb-2 fw-bold text-success mascara-moeda" value="${u.faturamento_manual || 0}" placeholder="Ex: 5000.00" required>
+                        <input type="text" name="faturamento_manual" class="form-control form-control-lg mb-2 fw-bold text-success mascara-moeda" value="${u.faturamento_manual || 0}" required>
                     </div>
                     <div class="modal-footer border-0 bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-success fw-bold px-4"><i class="fa-solid fa-check me-1"></i> Salvar</button>
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                     </div>
                 </form>
             </div>
@@ -677,10 +760,10 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     `).join('')}
 
     <div class="modal fade" id="modalGerenciarUsuarios" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header bg-info text-white">
-                    <h5 class="modal-title"><i class="fa-solid fa-users-gear me-2"></i> Gerenciar Equipe</h5>
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg animate-modal">
+                <div class="modal-header bg-dark text-white border-0">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-users-gear me-2 text-primary"></i> Gerenciar Equipe</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body overflow-auto p-0">
@@ -689,10 +772,10 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <tbody>
                             ${usuarios.map(u => `
                                 <tr>
-                                    <td class="ps-4"><img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="40" height="40" class="rounded-circle border" style="object-fit: cover;"></td>
-                                    <td class="fw-medium">${u.nome}</td>
+                                    <td class="ps-4"><img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border" style="object-fit: cover;"></td>
+                                    <td class="fw-medium text-dark">${u.nome}</td>
                                     <td><span class="badge bg-${u.setor === 'ecommerce' ? 'primary' : (u.setor === 'industria' ? 'warning text-dark' : 'dark')}">${u.setor.toUpperCase()}</span></td>
-                                    <td>${u.tipo}</td>
+                                    <td class="text-dark">${u.tipo}</td>
                                     <td class="text-end pe-4">
                                         ${u.tipo === 'vendedor' ? `<button class="btn btn-sm btn-light border text-success" data-bs-toggle="modal" data-bs-target="#modalMetasUsuario${u.id}" title="Metas Individuais"><i class="fa-solid fa-bullseye"></i></button>` : ''}
                                         <button class="btn btn-sm btn-light border text-primary" data-bs-toggle="modal" data-bs-target="#modalEditarUsuario${u.id}" title="Editar Perfil"><i class="fa-solid fa-pen"></i></button>
@@ -702,6 +785,9 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             `).join('')}
                         </tbody>
                     </table>
+                </div>
+                <div class="modal-footer border-0 bg-light">
+                    <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
                 </div>
             </div>
         </div>
@@ -714,19 +800,15 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             const kpiSem = clientesU.filter(c => c.prospeccao === 'sem_visita').length;
             const kpiCom = clientesU.filter(c => c.prospeccao === 'com_visita').length;
             const kpiNovos = clientesU.filter(c => c.fechou === 'sim').length;
-            
             const valorMinGrande = u.valor_cliente_grande > 0 ? u.valor_cliente_grande : (u.setor === 'ecommerce' ? 5000 : 15000);
             const kpiGrande = clientesU.filter(c => c.fechou === 'sim' && (c.valor_venda >= valorMinGrande || c.cliente_grande === 'sim')).length;
-            
             const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
             const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
             const kpiReativ = clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim').length;
             const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.fechou === 'sim').length;
-            
             const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
             const kpiFidel = clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim').length;
             const taxaInd = kpiCarteira > 0 ? (kpiFidel / kpiCarteira) * 100 : 0;
-
             const metasSetor = u.setor === 'ecommerce' ? metas.ecommerce : metas.industria;
             const m_sem = u.qtd_prosp_sem_visita > 0 ? u.qtd_prosp_sem_visita : (metasSetor?.qtd_prosp_sem_visita || 0);
             const m_com = u.qtd_prosp_com_visita > 0 ? u.qtd_prosp_com_visita : (metasSetor?.qtd_prosp_com_visita || 0);
@@ -737,7 +819,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             const m_reativ = u.qtd_reativacoes > 0 ? u.qtd_reativacoes : (metasSetor?.qtd_reativacoes || 0);
             const m_outras = u.qtd_vendas_outras_regioes > 0 ? u.qtd_vendas_outras_regioes : (metasSetor?.qtd_vendas_outras_regioes || 0);
             const m_taxa = u.taxa_retencao > 0 ? u.taxa_retencao : (metasSetor?.taxa_retencao || 40);
-
             const vAlcancadoGlobal = (Number(alcancadoGlobal) || 0) + somaManualTotal;
             const vMetaGlobal = Number(metaGlobal) || 0;
             const globalHit = (vMetaGlobal > 0 && vAlcancadoGlobal >= vMetaGlobal);
@@ -745,41 +826,15 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             const achievementCard = (titulo, atual, meta, pontos, icone, type = 'number') => {
                 let hit = false;
                 let progresso = '';
-                if (type === 'global') {
-                    hit = globalHit;
-                    progresso = hit ? 'Meta Batida!' : 'Aguardando Equipe';
-                } else if (type === 'percent') {
-                    hit = atual >= meta && meta > 0;
-                    progresso = `${atual.toFixed(1)}% / ${meta}%`;
-                } else {
-                    hit = atual >= meta && meta > 0;
-                    progresso = `${atual} / ${meta}`;
-                }
-
+                if (type === 'global') { hit = globalHit; progresso = hit ? 'Meta Batida!' : 'Aguardando Equipe'; }
+                else if (type === 'percent') { hit = atual >= meta && meta > 0; progresso = `${atual.toFixed(1)}% / ${meta}%`; }
+                else { hit = atual >= meta && meta > 0; progresso = `${atual} / ${meta}`; }
                 const bgClass = hit ? 'bg-success-subtle border-success' : 'bg-light border-secondary-subtle';
                 const textClass = hit ? 'text-success' : 'text-muted';
                 const iconColor = hit ? 'text-success' : 'text-secondary';
                 const pointBadge = hit ? `<span class="badge bg-success shadow-sm">+${pontos} pts</span>` : `<span class="badge bg-secondary shadow-sm opacity-50">+${pontos} pts</span>`;
-                const checkIcon = hit ? '<i class="fa-solid fa-circle-check ms-1 text-success"></i>' : '';
-
-                return `
-                    <div class="col-md-6 mb-3">
-                        <div class="card h-100 border ${bgClass} shadow-sm" style="transition: 0.3s;">
-                            <div class="card-body p-3 d-flex align-items-center">
-                                <div class="rounded-circle bg-white d-flex align-items-center justify-content-center border shadow-sm me-3" style="width: 45px; height: 45px; flex-shrink: 0;">
-                                    <i class="fa-solid ${icone} ${iconColor} fs-5"></i>
-                                </div>
-                                <div class="flex-grow-1">
-                                    <h6 class="mb-1 fw-bold ${textClass}" style="font-size: 0.8rem;">${titulo} ${checkIcon}</h6>
-                                    <div class="small ${hit ? 'text-dark fw-medium' : 'text-muted'}" style="font-size: 0.75rem;">${progresso}</div>
-                                </div>
-                                <div class="ms-2">
-                                    ${pointBadge}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                `;
+                const glowAchievement = hit ? 'glow-success' : '';
+                return `<div class="col-md-6 mb-3 animate-up"><div class="card h-100 border ${bgClass} shadow-sm ${glowAchievement}"><div class="card-body p-3 d-flex align-items-center"><div class="rounded-circle bg-white d-flex align-items-center justify-content-center border shadow-sm me-3" style="width: 45px; height: 45px; flex-shrink: 0;"><i class="fa-solid ${icone} ${iconColor} fs-5"></i></div><div class="flex-grow-1"><h6 class="mb-1 fw-bold ${textClass}" style="font-size: 0.8rem;">${titulo} ${hit ? '<i class="fa-solid fa-circle-check ms-1 text-success"></i>' : ''}</h6><div class="small ${hit ? 'text-dark fw-medium' : 'text-muted'}" style="font-size: 0.75rem;">${progresso}</div></div><div class="ms-2">${pointBadge}</div></div></div></div>`;
             };
 
             conquistasHtml = `
@@ -787,29 +842,20 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
                         <div class="modal-content border-0 shadow-lg animate-modal">
                             <div class="modal-header bg-dark text-white border-0 d-flex align-items-center">
-                                <img src="${u.foto || '[https://via.placeholder.com/40](https://via.placeholder.com/40)'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
-                                <div>
-                                    <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i> Conquistas de ${u.nome}</h5>
-                                    <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos Totais</span>
-                                </div>
+                                <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-primary me-3 shadow-sm" style="object-fit: cover;">
+                                <div><h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-primary me-2"></i> Conquistas: ${u.nome}</h5><span class="badge bg-primary mt-1"><i class="fa-solid fa-star me-1"></i> ${u.pontuacao} Pontos</span></div>
                                 <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                             </div>
-                            <div class="modal-body p-4 bg-light-subtle">
-                                <h6 class="fw-bold text-muted mb-3 text-uppercase" style="font-size: 0.8rem; letter-spacing: 1px;">Metas Alcançadas</h6>
-                                <div class="row">
-                                    ${achievementCard('Meta Global Equipe', 0, 0, 30, 'fa-earth-americas', 'global')}
-                                    ${achievementCard('Prosp. Sem Visita', kpiSem, m_sem, 10, 'fa-phone')}
-                                    ${achievementCard('Prosp. Com Visita', kpiCom, m_com, 30, 'fa-handshake')}
-                                    ${achievementCard('Novos Clientes', kpiNovos, m_novos, 30, 'fa-user-check')}
-                                    ${achievementCard('Cliente Grande', kpiGrande, m_grande, 20, 'fa-gem')}
-                                    ${achievementCard('Pós-Venda', kpiPos, m_pos, 20, 'fa-headset')}
-                                    ${achievementCard('Visitas Carteira', kpiVisita, m_visita, 20, 'fa-car')}
-                                    ${achievementCard('Reativações', kpiReativ, m_reativ, 20, 'fa-rotate-right')}
-                                    ${u.setor === 'ecommerce' 
-                                        ? achievementCard('Vendas Outras Regiões', kpiOutrasRegioes, m_outras, 20, 'fa-map-location-dot')
-                                        : achievementCard('Taxa de Retenção', taxaInd, m_taxa, 20, 'fa-chart-pie', 'percent')
-                                    }
-                                </div>
+                            <div class="modal-body p-4 bg-light-subtle row">
+                                ${achievementCard('Meta Global Equipe', 0, 0, 30, 'fa-earth-americas', 'global')}
+                                ${achievementCard('Prosp. Sem Visita', kpiSem, m_sem, 10, 'fa-phone')}
+                                ${achievementCard('Prosp. Com Visita', kpiCom, m_com, 30, 'fa-handshake')}
+                                ${achievementCard('Novos Clientes', kpiNovos, m_novos, 30, 'fa-user-check')}
+                                ${achievementCard('Cliente Grande', kpiGrande, m_grande, 20, 'fa-gem')}
+                                ${achievementCard('Pós-Venda', kpiPos, m_pos, 20, 'fa-headset')}
+                                ${achievementCard('Visitas Carteira', kpiVisita, m_visita, 20, 'fa-car')}
+                                ${achievementCard('Reativações', kpiReativ, m_reativ, 20, 'fa-rotate-right')}
+                                ${u.setor === 'ecommerce' ? achievementCard('Vendas Outras Regiões', kpiOutrasRegioes, m_outras, 20, 'fa-map-location-dot') : achievementCard('Taxa de Retenção', taxaInd, m_taxa, 20, 'fa-chart-pie', 'percent')}
                             </div>
                             <div class="modal-footer border-0 bg-light">
                                 <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
@@ -822,38 +868,31 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
         return `
         ${conquistasHtml}
-
         ${u.tipo === 'vendedor' ? `
         <div class="modal fade" id="modalMetasUsuario${u.id}" tabindex="-1">
-            <div class="modal-dialog modal-lg">
-                <div class="modal-content">
+            <div class="modal-dialog modal-lg modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg animate-modal">
                     <form action="/admin/usuario/metas" method="POST">
-                        <div class="modal-header bg-dark text-white">
-                            <h5 class="modal-title"><i class="fa-solid fa-bullseye me-2"></i> Metas Individuais: ${u.nome}</h5>
+                        <div class="modal-header bg-dark text-white border-0">
+                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-bullseye me-2 text-primary"></i> Metas: ${u.nome}</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
-                        <div class="modal-body row">
+                        <div class="modal-body p-4 row">
                             <input type="hidden" name="vendedor_id" value="${u.id}">
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label small text-muted mb-0">Meta Financeira Individual (R$)</label>
-                                <input type="text" name="meta_geral" class="form-control mascara-moeda text-success fw-bold" value="${u.meta_geral || 0}">
-                            </div>
-                            <div class="col-md-6 mb-2">
-                                <label class="form-label small text-muted mb-0">Valor Cliente Grande (R$)</label>
-                                <input type="text" name="valor_cliente_grande" class="form-control mascara-moeda" value="${u.valor_cliente_grande || 0}">
-                            </div>
-                            <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp sem visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${u.qtd_prosp_sem_visita || 0}"></div>
-                            <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Prosp com visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${u.qtd_prosp_com_visita || 0}"></div>
-                            <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${u.qtd_clientes_fechar || 0}"></div>
-                            <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Cliente Grande</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${u.qtd_cliente_grande || 0}"></div>
-                            <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Pós venda feito</label><input type="number" name="qtd_pos_venda" class="form-control" value="${u.qtd_pos_venda || 0}"></div>
-                            <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Visitas carteira</label><input type="number" name="qtd_visitas_carteira" class="form-control" value="${u.qtd_visitas_carteira || 0}"></div>
-                            <div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">QTD Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${u.qtd_reativacoes || 0}"></div>
-                            ${u.setor === 'industria' ? `<div class="col-md-6 mb-2"><label class="form-label small text-muted mb-0">Taxa de Retenção (%)</label><input type="number" step="0.01" name="taxa_retencao" class="form-control" value="${u.taxa_retencao || 0}"></div>` : ''}
+                            <div class="col-md-6 mb-3"><label class="form-label small text-muted fw-bold text-uppercase">Meta Individual (R$)</label><input type="text" name="meta_geral" class="form-control text-success fw-bold mascara-moeda" value="${u.meta_geral || 0}"></div>
+                            <div class="col-md-6 mb-3"><label class="form-label small text-muted fw-bold text-uppercase">Vlr Cliente Grande (R$)</label><input type="text" name="valor_cliente_grande" class="form-control mascara-moeda" value="${u.valor_cliente_grande || 0}"></div>
+                            <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Prosp S/ Visita</label><input type="number" name="qtd_prosp_sem_visita" class="form-control" value="${u.qtd_prosp_sem_visita || 0}"></div>
+                            <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Prosp C/ Visita</label><input type="number" name="qtd_prosp_com_visita" class="form-control" value="${u.qtd_prosp_com_visita || 0}"></div>
+                            <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Novos Clientes</label><input type="number" name="qtd_clientes_fechar" class="form-control" value="${u.qtd_clientes_fechar || 0}"></div>
+                            <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Cli. Grande</label><input type="number" name="qtd_cliente_grande" class="form-control" value="${u.qtd_cliente_grande || 0}"></div>
+                            <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Pós-Venda</label><input type="number" name="qtd_pos_venda" class="form-control" value="${u.qtd_pos_venda || 0}"></div>
+                            <div class="col-md-4 mb-2"><label class="form-label small text-muted text-uppercase">Visita Cart.</label><input type="number" name="qtd_visitas_carteira" class="form-control" value="${u.qtd_visitas_carteira || 0}"></div>
+                            <div class="col-md-6 mb-2"><label class="form-label small text-muted text-uppercase">Reativações</label><input type="number" name="qtd_reativacoes" class="form-control" value="${u.qtd_reativacoes || 0}"></div>
+                            ${u.setor === 'industria' ? `<div class="col-md-6 mb-2"><label class="form-label small text-muted text-uppercase">Taxa Retenção (%)</label><input type="number" step="0.01" name="taxa_retencao" class="form-control" value="${u.taxa_retencao || 0}"></div>` : ''}
                         </div>
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
-                            <button type="submit" class="btn btn-dark"><i class="fa-solid fa-check me-1"></i> Salvar</button>
+                        <div class="modal-footer border-0 bg-light">
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                         </div>
                     </form>
                 </div>
@@ -862,31 +901,23 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         ` : ''}
 
         <div class="modal fade" id="modalEditarUsuario${u.id}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg animate-modal">
                     <form action="/admin/usuario/editar" method="POST" enctype="multipart/form-data">
-                        <div class="modal-header bg-warning"><h5 class="modal-title"><i class="fa-solid fa-pen me-2"></i> Editar: ${u.nome}</h5></div>
-                        <div class="modal-body">
+                        <div class="modal-header bg-dark text-white border-0"><h5 class="modal-title fw-bold"><i class="fa-solid fa-pen me-2 text-primary"></i> Perfil: ${u.nome}</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body p-4">
                             <input type="hidden" name="id" value="${u.id}">
-                            <label class="form-label small text-muted mb-0 mt-2">Nome</label>
-                            <input type="text" name="nome" class="form-control mb-2" value="${u.nome}" required>
-                            <label class="form-label small text-muted mb-0 mt-2">Token de Acesso</label>
-                            <input type="text" name="token" class="form-control mb-2" value="${u.token}" required>
-                            <label class="form-label small text-muted mb-0 mt-2">Nova Foto</label>
-                            <input type="file" name="foto" class="form-control mb-3" accept="image/png, image/jpeg, image/jpg">
-                            <select name="tipo" class="form-select mb-2">
-                                <option value="vendedor" ${u.tipo === 'vendedor' ? 'selected' : ''}>Vendedor</option>
-                                <option value="admin" ${u.tipo === 'admin' ? 'selected' : ''}>Administrador</option>
-                            </select>
-                            <select name="setor" class="form-select mb-2">
-                                <option value="ecommerce" ${u.setor === 'ecommerce' ? 'selected' : ''}>E-commerce</option>
-                                <option value="industria" ${u.setor === 'industria' ? 'selected' : ''}>Indústria</option>
-                                <option value="admin" ${u.setor === 'admin' ? 'selected' : ''}>Admin (Geral)</option>
-                            </select>
+                            <label class="form-label text-muted small fw-bold text-uppercase">Nome</label><input type="text" name="nome" class="form-control mb-3" value="${u.nome}" required>
+                            <label class="form-label text-muted small fw-bold text-uppercase">Token</label><input type="text" name="token" class="form-control mb-3" value="${u.token}" required>
+                            <label class="form-label text-muted small fw-bold text-uppercase">Foto</label><input type="file" name="foto" class="form-control mb-3" accept="image/*">
+                            <div class="row">
+                                <div class="col-6"><label class="form-label text-muted small text-uppercase">Tipo</label><select name="tipo" class="form-select"><option value="vendedor" ${u.tipo === 'vendedor' ? 'selected' : ''}>Vendedor</option><option value="admin" ${u.tipo === 'admin' ? 'selected' : ''}>Admin</option></select></div>
+                                <div class="col-6"><label class="form-label text-muted small text-uppercase">Setor</label><select name="setor" class="form-select"><option value="ecommerce" ${u.setor === 'ecommerce' ? 'selected' : ''}>E-commerce</option><option value="industria" ${u.setor === 'industria' ? 'selected' : ''}>Indústria</option><option value="admin" ${u.setor === 'admin' ? 'selected' : ''}>Geral</option></select></div>
+                            </div>
                         </div>
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
-                            <button type="submit" class="btn btn-warning"><i class="fa-solid fa-check me-1"></i> Salvar</button>
+                        <div class="modal-footer border-0 bg-light">
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                         </div>
                     </form>
                 </div>
@@ -894,17 +925,16 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         </div>
 
         <div class="modal fade" id="modalExcluirUsuario${u.id}" tabindex="-1">
-            <div class="modal-dialog">
-                <div class="modal-content">
+            <div class="modal-dialog modal-dialog-centered">
+                <div class="modal-content border-0 shadow-lg animate-modal">
                     <form action="/admin/usuario/excluir" method="POST">
-                        <div class="modal-header bg-danger text-white"><h5 class="modal-title"><i class="fa-solid fa-triangle-exclamation me-2"></i> Atenção!</h5></div>
-                        <div class="modal-body">
-                            <input type="hidden" name="id" value="${u.id}">
-                            <p>Tem certeza que deseja excluir o usuário <strong>${u.nome}</strong>?</p>
+                        <div class="modal-header bg-dark text-white border-0"><h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2 text-danger"></i> Atenção!</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                        <div class="modal-body p-4 text-center">
+                            <input type="hidden" name="id" value="${u.id}"><p class="text-dark">Excluir o usuário <strong>${u.nome}</strong>? Esta ação é irreversível.</p>
                         </div>
-                        <div class="modal-footer justify-content-between">
-                            <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#modalGerenciarUsuarios"><i class="fa-solid fa-arrow-left me-1"></i> Voltar</button>
-                            <button type="submit" class="btn btn-danger"><i class="fa-solid fa-trash me-1"></i> Sim, Excluir</button>
+                        <div class="modal-footer border-0 bg-light">
+                            <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                            <button type="submit" class="btn btn-dark fw-bold px-4">Excluir</button>
                         </div>
                     </form>
                 </div>
@@ -919,23 +949,13 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         <div class="modal fade" id="modalObsAdmin${index}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg animate-modal">
-                    <div class="modal-header bg-info border-0"><h6 class="modal-title fw-bold text-white"><i class="fa-solid fa-note-sticky me-2"></i> Anotações do Cliente</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-header bg-dark text-white border-0"><h6 class="modal-title fw-bold"><i class="fa-solid fa-note-sticky me-2 text-primary"></i> Anotações</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body p-4">
-                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom">
-                            <div class="bg-light p-3 rounded-circle me-3"><i class="fa-solid fa-building text-info fa-2x"></i></div>
-                            <div>
-                                <h5 class="fw-bold text-dark mb-0">${c.nome}</h5>
-                                <span class="text-muted small"><i class="fa-solid fa-location-dot me-1 text-danger"></i> ${c.regiao || 'Região não informada'}</span><br>
-                                <span class="badge bg-light text-dark border mt-1"><i class="fa-solid fa-user text-muted me-1"></i> Vend: ${c.vendedor_nome || 'Desconhecido'}</span>
-                            </div>
-                        </div>
-                        <h6 class="text-muted small text-uppercase fw-bold mb-2">Observação Registrada:</h6>
-                        <div class="bg-light-subtle border border-info-subtle p-3 rounded-3 shadow-sm">
-                            <p class="mb-0 text-dark" style="white-space: pre-wrap; font-size: 0.95rem;">${c.observacao}</p>
-                        </div>
+                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom"><div class="bg-light p-3 rounded-circle me-3"><i class="fa-solid fa-building text-primary fa-2x"></i></div><div><h5 class="fw-bold text-dark mb-0">${c.nome}</h5><span class="text-muted small">${c.regiao || ''}</span></div></div>
+                        <p class="mb-0 text-dark" style="white-space: pre-wrap;">${c.observacao}</p>
                     </div>
-                    <div class="modal-footer border-0">
-                        <button type="button" class="btn btn-light" data-bs-dismiss="modal">Fechar Aba</button>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
                     </div>
                 </div>
             </div>
@@ -945,21 +965,15 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
     <div class="modal fade" id="modalZerarCiclo" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content border-0 shadow-lg">
+            <div class="modal-content border-0 shadow-lg animate-modal">
                 <form id="formZerarCiclo">
-                    <div class="modal-header bg-danger text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-triangle-exclamation me-2"></i> Fechar mês</h5>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
-                    </div>
+                    <div class="modal-header bg-dark text-white border-0"><h5 class="modal-title fw-bold"><i class="fa-solid fa-rotate-right me-2 text-danger"></i> Fechar Mês</h5><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
                     <div class="modal-body p-4 text-center">
-                        <i class="fa-solid fa-rotate-right fa-3x text-danger mb-3"></i>
-                        <h5 class="fw-bold text-dark">Tem certeza absoluta?</h5>
-                        <p class="text-muted mb-0">Esta ação irá arquivar todos os clientes atuais e <strong>zerar os pontos e as métricas</strong> de todos os vendedores instantaneamente.</p>
-                        <p class="text-muted small mt-2">Os clientes continuarão salvos no banco de dados, mas o painel começará um ciclo novo e limpo a partir de agora.</p>
+                        <p class="text-dark">Arquivar dados atuais e <strong>zerar métricas</strong>? Os clientes serão movidos para o histórico com segurança.</p>
                     </div>
-                    <div class="modal-footer border-0 justify-content-center bg-light">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-danger fw-bold px-4">Fechar mês</button>
+                    <div class="modal-footer border-0 bg-light">
+                        <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Confirmar Fechamento</button>
                     </div>
                 </form>
             </div>
@@ -969,19 +983,11 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     <div class="modal fade" id="modalFechamentoSucesso" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content border-0 shadow-lg text-center p-4 animate-modal">
-                <div class="mb-3">
-                    <i class="fa-solid fa-circle-check text-success" style="font-size: 4.5rem;"></i>
-                </div>
+                <div class="mb-3"><i class="fa-solid fa-circle-check text-success" style="font-size: 4.5rem;"></i></div>
                 <h4 class="fw-bold text-dark">Mês Fechado com Sucesso!</h4>
-                <p class="text-muted mb-4">Todos os dados foram arquivados com segurança e os placares zerados para o novo ciclo.</p>
-                
-                <div class="d-grid gap-2">
-                    <a id="btnDownloadFechamento" href="#" class="btn btn-success fw-bold py-2 shadow-sm" download>
-                        <i class="fa-solid fa-download me-2"></i> Baixar Relatório do Ciclo Encerrado
-                    </a>
-                    <button type="button" class="btn btn-light border fw-bold py-2 shadow-sm" onclick="window.location.reload()">
-                        Voltar
-                    </button>
+                <div class="d-grid gap-2 mt-4">
+                    <a id="btnDownloadFechamento" href="#" class="btn btn-success fw-bold py-2 shadow-sm" download><i class="fa-solid fa-download me-2"></i> Baixar Relatório do Ciclo</a>
+                    <button type="button" class="btn btn-secondary fw-bold py-2" onclick="window.location.reload()">Voltar ao Painel</button>
                 </div>
             </div>
         </div>
@@ -989,91 +995,37 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
 
     <script>
     document.addEventListener("DOMContentLoaded", function() {
-        
-        // --- INTERCEPTANDO O FECHAMENTO DO MÊS VIA AJAX ---
         const formZerar = document.getElementById('formZerarCiclo');
         if(formZerar) {
             formZerar.addEventListener('submit', async function(e) {
                 e.preventDefault();
-                
                 const btnSubmit = this.querySelector('button[type="submit"]');
-                const btnCancel = this.querySelector('button[data-bs-dismiss="modal"]');
-                
-                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Processando...';
-                btnSubmit.disabled = true;
-                btnCancel.disabled = true;
-
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Processando...'; btnSubmit.disabled = true;
                 try {
-                    const response = await fetch('/admin/zerar-ciclo', {
-                        method: 'POST',
-                        headers: { 'Accept': 'application/json' }
-                    });
-                    
+                    const response = await fetch('/admin/zerar-ciclo', { method: 'POST', headers: { 'Accept': 'application/json' } });
                     const data = await response.json();
-                    
                     if(data.success) {
-                        // Esconde modal de confirmação
-                        const modalAtual = bootstrap.Modal.getInstance(document.getElementById('modalZerarCiclo'));
-                        modalAtual.hide();
-                        
-                        // Configura o botão de download com a URL do arquivo gerado
+                        bootstrap.Modal.getInstance(document.getElementById('modalZerarCiclo')).hide();
                         document.getElementById('btnDownloadFechamento').href = data.downloadUrl;
-                        
-                        // Mostra modal de sucesso com opção de download
-                        const modalSucesso = new bootstrap.Modal(document.getElementById('modalFechamentoSucesso'));
-                        modalSucesso.show();
-                    } else {
-                        alert('Erro ao fechar o ciclo: ' + (data.error || 'Desconhecido'));
-                        window.location.reload();
-                    }
-                } catch(err) {
-                    console.error(err);
-                    alert('Erro de comunicação com o servidor.');
-                    window.location.reload();
-                }
+                        new bootstrap.Modal(document.getElementById('modalFechamentoSucesso')).show();
+                    } else { alert('Erro ao fechar ciclo.'); window.location.reload(); }
+                } catch(err) { window.location.reload(); }
             });
         }
-        
-        // Mascaras de moeda
         const aplicarMascaraMoeda = (input) => {
-            let valor = input.value;
-            if (valor === "") return;
-
-            valor = valor.replace('R$', '').trim();
-            if (valor.includes('.') && !valor.includes(',')) {
-                valor = Number(valor).toFixed(2);
-            }
-            
-            const isNegativo = valor.startsWith('-');
-            valor = valor.replace(/\\D/g, "");
-
-            if (valor === "") {
-                input.value = "";
-                return;
-            }
-
+            let valor = input.value; if (valor === "") return;
+            valor = valor.replace('R$', '').trim(); if (valor.includes('.') && !valor.includes(',')) { valor = Number(valor).toFixed(2); }
+            const isNegativo = valor.startsWith('-'); valor = valor.replace(/\\D/g, ""); if (valor === "") { input.value = ""; return; }
             valor = (Number(valor) / 100).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-            if(isNegativo) valor = '-' + valor;
-            
-            input.value = valor;
+            if(isNegativo) valor = '-' + valor; input.value = valor;
         };
-
-        const inputsMoeda = document.querySelectorAll('.mascara-moeda');
-        inputsMoeda.forEach(input => {
-            aplicarMascaraMoeda(input);
-            input.addEventListener('input', function(e) {
-                aplicarMascaraMoeda(e.target);
-            });
+        document.querySelectorAll('.mascara-moeda').forEach(input => {
+            aplicarMascaraMoeda(input); input.addEventListener('input', (e) => aplicarMascaraMoeda(e.target));
         });
-
-        const forms = document.querySelectorAll('form');
-        forms.forEach(form => {
-            // Ignora o form de zerar ciclo pois ele é tratado no fetch acima
+        document.querySelectorAll('form').forEach(form => {
             if (form.id === 'formZerarCiclo') return;
-            
-            form.addEventListener('submit', function() {
-                const formInputs = form.querySelectorAll('.mascara-moeda');
-                formInputs.forEach(input => {
+            form.addEventListener('submit', () => {
+                form.querySelectorAll('.mascara-moeda').forEach(input => {
                     if (input.value) {
                         const isNegativo = input.value.startsWith('-');
                         let cleanValue = input.value.replace(/[R$\\s-]/g, '').replace(/\\./g, '').replace(',', '.');
@@ -1082,96 +1034,43 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                 });
             });
         });
-
-        // Paginação
         const inputTexto = document.getElementById('filtroTextoAdmin');
         const containerPaginacao = document.getElementById('paginacaoAdminContainer');
         const linhaVazia = document.getElementById('linhaVaziaAdmin');
-        
         if(!inputTexto || !containerPaginacao) return;
-
         const todasLinhas = Array.from(document.querySelectorAll('.cliente-admin-row'));
-        const itensPorPagina = 12;
-        let paginaAtual = 1;
-        let linhasAtuais = [...todasLinhas];
-
+        const itensPorPagina = 12; let paginaAtual = 1; let linhasAtuais = [...todasLinhas];
         function aplicarFiltros() {
             const termo = inputTexto.value.toLowerCase();
-            linhasAtuais = todasLinhas.filter(linha => {
-                const textoBusca = linha.getAttribute('data-busca');
-                return textoBusca.includes(termo);
-            });
-            paginaAtual = 1; 
-            renderizarTabela();
+            linhasAtuais = todasLinhas.filter(linha => linha.getAttribute('data-busca').includes(termo));
+            paginaAtual = 1; renderizarTabela();
         }
-
         function renderizarTabela() {
             todasLinhas.forEach(l => l.style.display = 'none');
-            if (linhasAtuais.length === 0) {
-                linhaVazia.style.display = '';
-                containerPaginacao.innerHTML = '';
-                return;
-            } else {
-                linhaVazia.style.display = 'none';
-            }
-
+            if (linhasAtuais.length === 0) { linhaVazia.style.display = ''; containerPaginacao.innerHTML = ''; return; }
+            else { linhaVazia.style.display = 'none'; }
             const totalPaginas = Math.ceil(linhasAtuais.length / itensPorPagina);
             const inicio = (paginaAtual - 1) * itensPorPagina;
             const fim = inicio + itensPorPagina;
-
             linhasAtuais.slice(inicio, fim).forEach(l => l.style.display = '');
             renderizarPaginacao(totalPaginas);
         }
-
         function renderizarPaginacao(totalPaginas) {
-            containerPaginacao.innerHTML = '';
-            if (totalPaginas <= 1) return;
-            const ul = document.createElement('ul');
-            ul.className = 'pagination pagination-sm shadow-sm mb-0';
+            containerPaginacao.innerHTML = ''; if (totalPaginas <= 1) return;
+            const ul = document.createElement('ul'); ul.className = 'pagination pagination-sm shadow-sm mb-0';
             ul.appendChild(criarBotaoPagina('<', paginaAtual - 1, paginaAtual === 1));
-
-            if (totalPaginas <= 5) {
-                for (let i = 1; i <= totalPaginas; i++) { ul.appendChild(criarBotaoPagina(i, i, false, i === paginaAtual)); }
-            } else {
-                ul.appendChild(criarBotaoPagina(1, 1, false, 1 === paginaAtual));
-                if (paginaAtual > 3) ul.appendChild(criarDots());
-                const inicio = Math.max(2, paginaAtual - 1);
-                const fim = Math.min(totalPaginas - 1, paginaAtual + 1);
-                for (let i = inicio; i <= fim; i++) { ul.appendChild(criarBotaoPagina(i, i, false, i === paginaAtual)); }
-                if (paginaAtual < totalPaginas - 2) ul.appendChild(criarDots());
-                ul.appendChild(criarBotaoPagina(totalPaginas, totalPaginas, false, totalPaginas === paginaAtual));
-            }
+            for (let i = 1; i <= totalPaginas; i++) { if (totalPaginas > 5 && Math.abs(i - paginaAtual) > 2 && i !== 1 && i !== totalPaginas) continue; ul.appendChild(criarBotaoPagina(i, i, false, i === paginaAtual)); }
             ul.appendChild(criarBotaoPagina('>', paginaAtual + 1, paginaAtual === totalPaginas));
             containerPaginacao.appendChild(ul);
         }
-
         function criarBotaoPagina(texto, alvo, disabled = false, active = false) {
-            const li = document.createElement('li');
-            li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
-            const a = document.createElement('a');
-            a.className = 'page-link fw-bold text-dark';
-            a.style.cursor = disabled ? 'default' : 'pointer';
-            if(active) {
-                a.classList.remove('text-dark');
-                a.classList.add('bg-info', 'text-white', 'border-info');
-            }
-            a.innerHTML = texto;
-            if (!disabled && !active) {
-                a.onclick = function(e) { e.preventDefault(); paginaAtual = alvo; renderizarTabela(); };
-            }
-            li.appendChild(a);
-            return li;
+            const li = document.createElement('li'); li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+            const a = document.createElement('a'); a.className = 'page-link fw-bold'; a.style.cursor = disabled ? 'default' : 'pointer';
+            if(active) { a.classList.add('bg-primary', 'text-white', 'border-primary'); } else { a.classList.add('text-dark'); }
+            a.innerHTML = texto; if (!disabled && !active) { a.onclick = (e) => { e.preventDefault(); paginaAtual = alvo; renderizarTabela(); }; }
+            li.appendChild(a); return li;
         }
-
-        function criarDots() {
-            const li = document.createElement('li');
-            li.className = 'page-item disabled';
-            li.innerHTML = '<a class="page-link border-0 bg-transparent text-muted fw-bold">...</a>';
-            return li;
-        }
-
-        inputTexto.addEventListener('input', aplicarFiltros);
-        aplicarFiltros();
+        inputTexto.addEventListener('input', aplicarFiltros); aplicarFiltros();
     });
     </script>
     `);
