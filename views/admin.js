@@ -116,6 +116,21 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     
     const somaManualTotal = usuarios.reduce((acc, u) => acc + Number(u.faturamento_manual || 0), 0);
 
+    // =========================================================
+    // LÓGICA: PEGAR A DATA REAL DO ÚLTIMO AJUSTE DE FATURAMENTO
+    // =========================================================
+    const dataMaisRecente = usuarios.reduce((maxDate, u) => {
+        if (u.data_atualizacao_faturamento) {
+            const dataUsuario = new Date(u.data_atualizacao_faturamento);
+            return dataUsuario > maxDate ? dataUsuario : maxDate;
+        }
+        return maxDate;
+    }, new Date(0));
+
+    const dataExibicaoRank = dataMaisRecente.getTime() > 0 
+        ? dataMaisRecente.toLocaleDateString('pt-BR') + ' às ' + dataMaisRecente.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+        : 'Aguardando atualização';
+
     // =========================================================================
     // CÁLCULO DA SOMA DAS MÉTRICAS INDIVIDUAIS PARA OS CONTAINERS GERAIS
     // =========================================================================
@@ -241,13 +256,24 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             .fluid-success {
                 background: linear-gradient(270deg, #198754, #20c997, #0f5132, #28a745);
                 background-size: 400% 400%;
-                animation: fluidGradient 6s ease infinite !important;
+                animation: fluidGradient 15s ease infinite !important;
             }
             .fluid-primary {
                 background: linear-gradient(270deg, #0d6efd, #6610f2, #0dcaf0, #0d6efd);
                 background-size: 400% 400%;
-                animation: fluidGradient 6s ease infinite !important;
+                animation: fluidGradient 15s ease infinite !important;
             }
+
+            /* ========================================= */
+            /* ANIMAÇÃO BARRA E SLIDES DO TUTORIAL       */
+            /* ========================================= */
+            .carousel-item {
+                transition: transform 0.6s cubic-bezier(0.22, 1, 0.36, 1) !important;
+            }
+            .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+            .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+            .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+            .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.4); }
 
             /* ========================================= */
             /* BOTÃO FLUTUANTE DE TUTORIAIS              */
@@ -297,7 +323,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             <div class="card shadow-sm border-start border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative ${glowGlobal}">
                                 <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                                 <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral</h6>
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
                                     
                                     <div class="progress mb-3 shadow-sm position-relative" style="height: 35px; border-radius: 25px; background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">
                                         <div class="progress-bar ${fluidClass} progress-bar-animate" role="progressbar" data-width="${porcentagem}" style="width: 0%;"></div>
@@ -359,8 +385,17 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="col-lg-4 col-md-6 d-flex animate-up" style="animation-delay: 0.3s;">
                         <div class="card shadow-sm rounded-3 border w-100">
                             <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                                <span class="fw-bold" style="font-size: 0.9rem;"><i class="fa-solid fa-sack-dollar text-success me-2"></i> Rank de Vendas (R$)</span>
-                            </div>
+                            <span class="fw-bold d-flex align-items-center" style="font-size: 0.9rem;">
+                                <i class="fa-solid fa-sack-dollar text-success me-2"></i>
+                                Vendas
+                            </span>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium"
+                                style="font-size: 0.65rem; letter-spacing: 0px;"
+                                title="Momento da última modificação manual do Admin">
+                                <i class="fa-solid fa-clock me-1"></i>
+                                Atualizado: ${dataExibicaoRank}
+                            </span>
+                        </div>
                             <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="bg-light" style="font-size: 0.75rem;">
@@ -574,7 +609,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                         <th class="py-3 text-muted small uppercase">Datas</th>
                                         <th class="py-3 text-muted small uppercase">Status & Valor</th>
                                         <th class="py-3 text-muted small uppercase">Indicadores</th>
-                                        <th class="text-end pe-4 py-3 text-muted small uppercase">Obs.</th> 
+                                        <th class="text-end pe-4 py-3 text-muted small uppercase">Detalhes</th> 
                                     </tr>
                                 </thead>
                                 <tbody id="tabelaTodosClientesBody">
@@ -582,7 +617,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                         <td colspan="6" class="text-center text-muted py-5"><i class="fa-solid fa-folder-open fa-2x mb-2 text-light-subtle"></i><br>Nenhum cliente encontrado.</td>
                                     </tr>
                                     ${todosClientes.map((c, index) => `
-                                    <tr class="cliente-admin-row" data-busca="${(c.nome + ' ' + (c.vendedor_nome || '') + ' ' + (c.regiao || '')).toLowerCase()}">
+                                    <tr class="cliente-admin-row" style="cursor: pointer;" data-busca="${(c.nome + ' ' + (c.vendedor_nome || '') + ' ' + (c.regiao || '')).toLowerCase()}" data-bs-toggle="modal" data-bs-target="#modalInfoAdmin${index}">
                                         <td class="ps-4 fw-bold text-dark">
                                             ${c.nome}<br><span class="text-muted fw-normal" style="font-size: 0.75rem;"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${c.regiao || 'Não informado'}</span>
                                         </td>
@@ -602,8 +637,8 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                 ${c.carteira === 'sim' ? (c.comprou_recorrente === 'sim' ? '<span class="badge bg-info-subtle text-info border border-info-subtle w-100 text-start fw-normal" style="font-size: 0.7rem;"><i class="fa-solid fa-cart-shopping me-1"></i> Comprou</span>' : '<span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle w-100 text-start fw-normal" style="font-size: 0.7rem;"><i class="fa-solid fa-cart-shopping me-1"></i> Inativo</span>') : ''}
                                             </div>
                                         </td>
-                                        <td class="text-end pe-4">
-                                            <button class="btn btn-sm btn-outline-info rounded-circle shadow-sm" data-bs-toggle="modal" data-bs-target="#modalObsAdmin${index}" title="Ver Observação"><i class="fa-solid fa-eye"></i></button>
+                                        <td class="text-end pe-4 align-middle">
+                                            <i class="fa-solid fa-chevron-right text-muted"></i>
                                         </td>
                                     </tr>
                                     `).join('')}
@@ -617,7 +652,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             </div> 
             
             <div class="fab-tutorial" data-bs-toggle="modal" data-bs-target="#modalTutorialList" title="Tutoriais e Ajuda">
-                <i class="fa-solid fa-info"></i>
+                <i class="fas fa-question-circle"></i>
             </div>
             
         </div> 
@@ -1021,15 +1056,67 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     }).join('')}
 
     ${todosClientes.map((c, index) => {
-        if (!c.observacao) return '';
         return `
-        <div class="modal fade" id="modalObsAdmin${index}" tabindex="-1">
+        <div class="modal fade" id="modalInfoAdmin${index}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg animate-modal">
-                    <div class="modal-header bg-dark text-white border-0"><h6 class="modal-title fw-bold"><i class="fa-solid fa-note-sticky me-2 text-primary"></i> Anotações</h6><button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button></div>
+                    <div class="modal-header bg-dark text-white border-0">
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-address-card me-2 text-primary"></i> Detalhes do Registro</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                    </div>
                     <div class="modal-body p-4">
-                        <div class="d-flex align-items-center mb-3 pb-3 border-bottom"><div class="bg-light p-3 rounded-circle me-3"><i class="fa-solid fa-building text-primary fa-2x"></i></div><div><h5 class="fw-bold text-dark mb-0">${c.nome}</h5><span class="text-muted small">${c.regiao || ''}</span></div></div>
-                        <p class="mb-0 text-dark" style="white-space: pre-wrap;">${c.observacao}</p>
+                        <div class="d-flex align-items-center mb-4 pb-3 border-bottom">
+                            <div class="bg-light p-3 rounded-circle me-3"><i class="fa-solid fa-building text-primary fa-2x"></i></div>
+                            <div>
+                                <h5 class="fw-bold text-dark mb-0">${c.nome} ${c.cliente_grande === 'sim' ? '<span class="badge bg-warning text-dark ms-1" style="font-size: 0.6rem;"><i class="fa-solid fa-star"></i> VIP</span>' : ''}</h5>
+                                <span class="text-muted small"><i class="fa-solid fa-location-dot text-danger me-1"></i> ${c.regiao || 'Local não informado'}</span>
+                                ${c.numero_lead ? `<div class="text-success mt-1 fw-bold" style="font-size: 0.85rem;"><i class="fa-brands fa-whatsapp me-1"></i> ${c.numero_lead}</div>` : ''}
+                            </div>
+                        </div>
+
+                        <div class="row mb-3">
+                            <div class="col-6 mb-3">
+                                <span class="d-block text-muted text-uppercase" style="font-size: 0.7rem; font-weight: bold;">Vendedor Responsável</span>
+                                <span class="text-dark fw-medium"><i class="fa-solid fa-user text-secondary me-1"></i> ${c.vendedor_nome || 'N/A'}</span>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <span class="d-block text-muted text-uppercase" style="font-size: 0.7rem; font-weight: bold;">Status</span>
+                                ${c.fechou === 'sim' ? '<span class="badge bg-success-subtle text-success border border-success-subtle">Fechado</span>' : '<span class="badge bg-light text-muted border">Pendente</span>'}
+                            </div>
+                            <div class="col-6 mb-3">
+                                <span class="d-block text-muted text-uppercase" style="font-size: 0.7rem; font-weight: bold;">Valor da Venda</span>
+                                <span class="text-success fw-bold" style="font-size: 1.1rem;">${formatarBRL(c.valor_venda)}</span>
+                            </div>
+                            <div class="col-6 mb-3">
+                                <span class="d-block text-muted text-uppercase" style="font-size: 0.7rem; font-weight: bold;">Origem de Prospecção</span>
+                                <span class="text-dark fw-medium">${c.prospeccao === 'com_visita' ? '<i class="fa-solid fa-handshake text-primary me-1"></i> Com Visita' : '<i class="fa-solid fa-phone text-secondary me-1"></i> Sem Visita'}</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-light rounded p-3 mb-4 border border-secondary-subtle">
+                            <div class="row">
+                                <div class="col-4 text-center border-end">
+                                    <span class="d-block text-muted text-uppercase mb-1" style="font-size: 0.65rem; font-weight: bold;">Pós-Venda</span>
+                                    ${c.pos_venda === 'sim' ? '<i class="fa-solid fa-check text-success"></i> Feito' : (c.pos_venda === 'nao' ? '<i class="fa-solid fa-xmark text-danger"></i> Não' : '<i class="fa-solid fa-clock text-warning"></i> Pendente')}
+                                </div>
+                                <div class="col-4 text-center border-end">
+                                    <span class="d-block text-muted text-uppercase mb-1" style="font-size: 0.65rem; font-weight: bold;">Reativação</span>
+                                    ${c.parado === 'sim' ? '<i class="fa-solid fa-check text-success"></i> Sim' : '<i class="fa-solid fa-minus text-muted"></i> Não'}
+                                </div>
+                                <div class="col-4 text-center">
+                                    <span class="d-block text-muted text-uppercase mb-1" style="font-size: 0.65rem; font-weight: bold;">Recorrência</span>
+                                    ${c.carteira === 'sim' ? (c.comprou_recorrente === 'sim' ? '<i class="fa-solid fa-cart-shopping text-info"></i> Sim' : '<i class="fa-solid fa-xmark text-danger"></i> Inativo') : '<i class="fa-solid fa-minus text-muted"></i> N/A'}
+                                </div>
+                            </div>
+                        </div>
+
+                        ${c.observacao ? `
+                            <div class="mb-2">
+                                <span class="d-block text-muted text-uppercase mb-1" style="font-size: 0.7rem; font-weight: bold;"><i class="fa-solid fa-note-sticky text-warning me-1"></i> Observações</span>
+                                <div class="p-3 bg-light rounded text-dark border border-secondary-subtle" style="white-space: pre-wrap; font-size: 0.9rem;">${c.observacao}</div>
+                            </div>
+                        ` : ''}
+
                     </div>
                     <div class="modal-footer border-0 bg-light">
                         <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Fechar</button>
@@ -1109,23 +1196,37 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     </div>
 
     <div class="modal fade" id="modalVerTutorial" tabindex="-1">
-        <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- Aumentado para XL -->
             <div class="modal-content border-0 shadow-lg animate-modal">
                 <div class="modal-header bg-dark text-white border-0">
                     <h5 class="modal-title fw-bold" id="tituloTutorialVer"><i class="fa-solid fa-graduation-cap me-2 text-primary"></i> Tutorial</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-0 text-center" style="background: #0f0f0f; height: 65vh; display: flex; flex-direction: column; justify-content: center; position: relative;">
+                <div class="modal-body p-0 text-center" style="background: #0f0f0f; height: 75vh; display: flex; flex-direction: column; justify-content: flex-start; position: relative;">
                     
-                    <div id="carouselTutorial" class="carousel slide h-100 w-100" data-bs-ride="false" data-bs-wrap="false">
-                        <div class="carousel-inner h-100 d-flex align-items-center" id="carouselTutorialInner">
+                    <!-- Barra de progresso FIXA fora dos slides -->
+                    <div id="tutorialProgressWrapper" class="w-100 d-flex justify-content-center pt-4 flex-shrink-0" style="display: none !important; z-index: 10;">
+                        <div class="w-100 px-2 mb-2" style="max-width: 90%;">
+                            <div class="d-flex justify-content-between text-light small mb-1 fw-bold">
+                                <span id="tutorialStepText">Passo 1</span>
+                                <span id="tutorialTotalText">Total: 0</span>
                             </div>
-                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselTutorial" data-bs-slide="prev" style="width: 50px;">
-                            <span class="carousel-control-prev-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                            <div class="progress shadow-sm" style="height: 8px; background-color: rgba(255,255,255,0.1); border-radius: 10px;">
+                                <div id="tutorialProgressBar" class="progress-bar bg-primary" role="progressbar" style="width: 0%; border-radius: 10px; transition: width 0.5s ease-in-out;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Carrossel ocupa o resto do espaço -->
+                    <div id="carouselTutorial" class="carousel slide carousel-fade w-100 flex-grow-1" data-bs-ride="false" data-bs-wrap="false" style="overflow: hidden;">
+                        <div class="carousel-inner h-100 d-flex align-items-center" id="carouselTutorialInner">
+                        </div>
+                        <button class="carousel-control-prev" type="button" data-bs-target="#carouselTutorial" data-bs-slide="prev" style="width: 5%; z-index: 20;">
+                            <span class="carousel-control-prev-icon bg-dark rounded-circle p-2 shadow" aria-hidden="true"></span>
                             <span class="visually-hidden">Anterior</span>
                         </button>
-                        <button class="carousel-control-next" type="button" data-bs-target="#carouselTutorial" data-bs-slide="next" style="width: 50px;">
-                            <span class="carousel-control-next-icon bg-dark rounded-circle p-2" aria-hidden="true"></span>
+                        <button class="carousel-control-next" type="button" data-bs-target="#carouselTutorial" data-bs-slide="next" style="width: 5%; z-index: 20;">
+                            <span class="carousel-control-next-icon bg-dark rounded-circle p-2 shadow" aria-hidden="true"></span>
                             <span class="visually-hidden">Próximo</span>
                         </button>
                     </div>
@@ -1142,7 +1243,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
     <div class="modal fade" id="modalCriarTutorial" tabindex="-1">
         <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
             <div class="modal-content border-0 shadow-lg animate-modal">
-                <form action="/admin/tutorial/criar" method="POST" enctype="multipart/form-data">
+                <form id="formCriarTutorial">
                     <div class="modal-header bg-dark text-white border-0">
                         <h5 class="modal-title fw-bold"><i class="fa-solid fa-folder-plus me-2 text-primary"></i> Criar Tutorial</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
@@ -1161,10 +1262,13 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                         <div id="slidesContainerTutorial">
                             <div class="slide-item bg-light-subtle border border-secondary-subtle p-3 rounded-3 mb-3 shadow-sm animate-up">
                                 <div class="d-flex justify-content-between align-items-center mb-3">
-                                    <span class="badge bg-primary">SLIDE 1</span>
+                                    <span class="badge bg-primary">PASSO 1</span>
                                 </div>
                                 <label class="form-label text-muted small fw-bold text-uppercase">Imagem do Slide</label>
-                                <input type="file" name="slide_img" class="form-control mb-3" accept="image/*" required>
+                                <input type="file" name="slide_img" class="form-control mb-3" accept="image/*" required onchange="window.previewTutorialImage(this)">
+                                <div class="preview-container text-center mb-3" style="display: none;">
+                                    <img src="" class="img-fluid rounded shadow-sm" style="max-height: 200px; object-fit: contain;">
+                                </div>
                                 <label class="form-label text-muted small fw-bold text-uppercase">Texto Explicativo</label>
                                 <textarea name="slide_texto" class="form-control" rows="2" placeholder="Descreva o que o vendedor deve fazer nesta etapa..." required></textarea>
                             </div>
@@ -1210,7 +1314,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             aplicarMascaraMoeda(input); input.addEventListener('input', (e) => aplicarMascaraMoeda(e.target));
         });
         document.querySelectorAll('form').forEach(form => {
-            if (form.id === 'formZerarCiclo') return;
+            if (form.id === 'formZerarCiclo' || form.id === 'formCriarTutorial') return;
             form.addEventListener('submit', () => {
                 form.querySelectorAll('.mascara-moeda').forEach(input => {
                     if (input.value) {
@@ -1224,62 +1328,210 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         const inputTexto = document.getElementById('filtroTextoAdmin');
         const containerPaginacao = document.getElementById('paginacaoAdminContainer');
         const linhaVazia = document.getElementById('linhaVaziaAdmin');
-        if(!inputTexto || !containerPaginacao) return;
-        const todasLinhas = Array.from(document.querySelectorAll('.cliente-admin-row'));
-        const itensPorPagina = 12; let paginaAtual = 1; let linhasAtuais = [...todasLinhas];
-        function aplicarFiltros() {
-            const termo = inputTexto.value.toLowerCase();
-            linhasAtuais = todasLinhas.filter(linha => linha.getAttribute('data-busca').includes(termo));
-            paginaAtual = 1; renderizarTabela();
+        if(inputTexto && containerPaginacao) {
+            const todasLinhas = Array.from(document.querySelectorAll('.cliente-admin-row'));
+            const itensPorPagina = 12; let paginaAtual = 1; let linhasAtuais = [...todasLinhas];
+            function aplicarFiltros() {
+                const termo = inputTexto.value.toLowerCase();
+                linhasAtuais = todasLinhas.filter(linha => linha.getAttribute('data-busca').includes(termo));
+                paginaAtual = 1; renderizarTabela();
+            }
+            function renderizarTabela() {
+                todasLinhas.forEach(l => l.style.display = 'none');
+                if (linhasAtuais.length === 0) { linhaVazia.style.display = ''; containerPaginacao.innerHTML = ''; return; }
+                else { linhaVazia.style.display = 'none'; }
+                const totalPaginas = Math.ceil(linhasAtuais.length / itensPorPagina);
+                const inicio = (paginaAtual - 1) * itensPorPagina;
+                const fim = inicio + itensPorPagina;
+                linhasAtuais.slice(inicio, fim).forEach(l => l.style.display = '');
+                renderizarPaginacao(totalPaginas);
+            }
+            function renderizarPaginacao(totalPaginas) {
+                containerPaginacao.innerHTML = ''; if (totalPaginas <= 1) return;
+                const ul = document.createElement('ul'); ul.className = 'pagination pagination-sm shadow-sm mb-0';
+                ul.appendChild(criarBotaoPagina('<', paginaAtual - 1, paginaAtual === 1));
+                for (let i = 1; i <= totalPaginas; i++) { if (totalPaginas > 5 && Math.abs(i - paginaAtual) > 2 && i !== 1 && i !== totalPaginas) continue; ul.appendChild(criarBotaoPagina(i, i, false, i === paginaAtual)); }
+                ul.appendChild(criarBotaoPagina('>', paginaAtual + 1, paginaAtual === totalPaginas));
+                containerPaginacao.appendChild(ul);
+            }
+            function criarBotaoPagina(texto, alvo, disabled = false, active = false) {
+                const li = document.createElement('li'); li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
+                const a = document.createElement('a'); a.className = 'page-link fw-bold'; a.style.cursor = disabled ? 'default' : 'pointer';
+                if(active) { a.classList.add('bg-primary', 'text-white', 'border-primary'); } else { a.classList.add('text-dark'); }
+                a.innerHTML = texto; if (!disabled && !active) { a.onclick = (e) => { e.preventDefault(); paginaAtual = alvo; renderizarTabela(); }; }
+                li.appendChild(a); return li;
+            }
+            inputTexto.addEventListener('input', aplicarFiltros); aplicarFiltros();
         }
-        function renderizarTabela() {
-            todasLinhas.forEach(l => l.style.display = 'none');
-            if (linhasAtuais.length === 0) { linhaVazia.style.display = ''; containerPaginacao.innerHTML = ''; return; }
-            else { linhaVazia.style.display = 'none'; }
-            const totalPaginas = Math.ceil(linhasAtuais.length / itensPorPagina);
-            const inicio = (paginaAtual - 1) * itensPorPagina;
-            const fim = inicio + itensPorPagina;
-            linhasAtuais.slice(inicio, fim).forEach(l => l.style.display = '');
-            renderizarPaginacao(totalPaginas);
+
+        const formCriarTutorial = document.getElementById('formCriarTutorial');
+        if (formCriarTutorial) {
+            formCriarTutorial.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                
+                const btnSubmit = this.querySelector('button[type="submit"]');
+                const textoOriginal = btnSubmit.innerHTML;
+                btnSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i> Salvando...';
+                btnSubmit.disabled = true;
+
+                const formData = new FormData();
+                formData.append('titulo', this.querySelector('[name="titulo"]').value);
+
+                const slides = this.querySelectorAll('.slide-item');
+                slides.forEach((slide, index) => {
+                    const fileInput = slide.querySelector('input[type="file"]');
+                    const textInput = slide.querySelector('textarea');
+                    
+                    if (fileInput.files.length > 0) {
+                        formData.append('slide_img', fileInput.files[0]);
+                        formData.append('slide_texto', textInput.value); 
+                    }
+                });
+
+                try {
+                    const response = await fetch('/admin/tutorial/criar', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.redirected) {
+                        window.location.href = response.url;
+                    } else {
+                        window.location.reload();
+                    }
+                } catch (err) {
+                    console.error("Erro ao salvar tutorial:", err);
+                    btnSubmit.innerHTML = textoOriginal;
+                    btnSubmit.disabled = false;
+                    alert("Erro ao salvar o tutorial. Tente novamente.");
+                }
+            });
         }
-        function renderizarPaginacao(totalPaginas) {
-            containerPaginacao.innerHTML = ''; if (totalPaginas <= 1) return;
-            const ul = document.createElement('ul'); ul.className = 'pagination pagination-sm shadow-sm mb-0';
-            ul.appendChild(criarBotaoPagina('<', paginaAtual - 1, paginaAtual === 1));
-            for (let i = 1; i <= totalPaginas; i++) { if (totalPaginas > 5 && Math.abs(i - paginaAtual) > 2 && i !== 1 && i !== totalPaginas) continue; ul.appendChild(criarBotaoPagina(i, i, false, i === paginaAtual)); }
-            ul.appendChild(criarBotaoPagina('>', paginaAtual + 1, paginaAtual === totalPaginas));
-            containerPaginacao.appendChild(ul);
+
+        // Listener para atualizar a barra de progresso do tutorial ao deslizar os slides
+        const carouselTutorial = document.getElementById('carouselTutorial');
+        if (carouselTutorial) {
+            carouselTutorial.addEventListener('slide.bs.carousel', function (e) {
+                if (window.currentTutorialSlides && window.currentTutorialSlides.length > 0) {
+                    const total = window.currentTutorialSlides.length;
+                    const current = e.to + 1;
+                    document.getElementById('tutorialStepText').innerText = 'Passo ' + current;
+                    document.getElementById('tutorialProgressBar').style.width = ((current / total) * 100) + '%';
+                }
+            });
         }
-        function criarBotaoPagina(texto, alvo, disabled = false, active = false) {
-            const li = document.createElement('li'); li.className = 'page-item' + (disabled ? ' disabled' : '') + (active ? ' active' : '');
-            const a = document.createElement('a'); a.className = 'page-link fw-bold'; a.style.cursor = disabled ? 'default' : 'pointer';
-            if(active) { a.classList.add('bg-primary', 'text-white', 'border-primary'); } else { a.classList.add('text-dark'); }
-            a.innerHTML = texto; if (!disabled && !active) { a.onclick = (e) => { e.preventDefault(); paginaAtual = alvo; renderizarTabela(); }; }
-            li.appendChild(a); return li;
-        }
-        inputTexto.addEventListener('input', aplicarFiltros); aplicarFiltros();
+
+        // ANIMAÇÕES DE NÚMEROS E PROGRESSO (Acontece no onLoad)
+        setTimeout(function() {
+            const progressBar = document.querySelector('.progress-bar-animate');
+            const progressText = document.querySelector('.progress-text-animate');
+            if (progressBar && progressText) {
+                const targetWidth = parseFloat(progressBar.getAttribute('data-width')) || 0;
+                progressBar.style.width = targetWidth + '%';
+                progressBar.style.transition = 'width 1.5s cubic-bezier(0.22, 1, 0.36, 1)';
+                
+                let startTimestamp = null;
+                const duration = 1500;
+                const step = function(timestamp) {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    const easeProgress = 1 - Math.pow(1 - progress, 4);
+                    const currentVal = (easeProgress * targetWidth).toFixed(1);
+                    progressText.innerText = currentVal + '%';
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        progressText.innerText = targetWidth.toFixed(1) + '%';
+                    }
+                };
+                window.requestAnimationFrame(step);
+            }
+
+            const counters = document.querySelectorAll('.counter-animate');
+            counters.forEach(function(counter) {
+                const target = parseFloat(counter.getAttribute('data-val')) || 0;
+                const isCurrency = counter.getAttribute('data-currency') === 'true';
+                const isPercent = counter.getAttribute('data-percent') === 'true';
+                const duration = 1500;
+                let startTimestamp = null;
+
+                const formatVal = function(val) {
+                    if (isCurrency) return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+                    if (isPercent) return val.toFixed(1) + '%';
+                    return Math.floor(val);
+                };
+
+                counter.innerText = formatVal(0);
+
+                const step = function(timestamp) {
+                    if (!startTimestamp) startTimestamp = timestamp;
+                    const progress = Math.min((timestamp - startTimestamp) / duration, 1);
+                    const easeProgress = 1 - Math.pow(1 - progress, 4);
+                    const currentVal = easeProgress * target;
+                    
+                    counter.innerText = formatVal(currentVal);
+                    if (progress < 1) {
+                        window.requestAnimationFrame(step);
+                    } else {
+                        counter.innerText = formatVal(target);
+                    }
+                };
+                window.requestAnimationFrame(step);
+            });
+        }, 100);
+
     });
 
+    window.previewTutorialImage = function(input) {
+        if (input.files && input.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                var container = input.parentElement.querySelector('.preview-container');
+                var img = container.querySelector('img');
+                img.src = e.target.result;
+                container.style.display = 'block';
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    };
+
+    window.recalcularSlides = function() {
+        var slides = document.querySelectorAll('#slidesContainerTutorial .slide-item');
+        slides.forEach((slide, index) => {
+            var badge = slide.querySelector('.badge');
+            if (badge) badge.innerText = 'PASSO ' + (index + 1);
+        });
+    };
+
     window.addSlideTutorial = function() {
-        var currentCount = document.querySelectorAll('#slidesContainerTutorial .slide-item').length + 1;
         var container = document.getElementById('slidesContainerTutorial');
         var div = document.createElement('div');
         div.className = 'slide-item bg-light-subtle border border-secondary-subtle p-3 rounded-3 mb-3 shadow-sm animate-up';
         div.innerHTML = 
             '<div class="d-flex justify-content-between align-items-center mb-3">' +
-                '<span class="badge bg-primary">SLIDE ' + currentCount + '</span>' +
-                '<button type="button" class="btn btn-sm btn-outline-danger py-1" onclick="this.parentElement.parentElement.remove()"><i class="fa-solid fa-trash me-1"></i> Remover</button>' +
+                '<span class="badge bg-primary"></span>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger py-1" onclick="this.parentElement.parentElement.remove(); window.recalcularSlides();"><i class="fa-solid fa-trash me-1"></i> Remover</button>' +
             '</div>' +
             '<label class="form-label text-muted small fw-bold text-uppercase">Imagem do Slide</label>' +
-            '<input type="file" name="slide_img" class="form-control mb-3" accept="image/*" required>' +
+            '<input type="file" name="slide_img" class="form-control mb-3" accept="image/*" required onchange="window.previewTutorialImage(this)">' +
+            '<div class="preview-container text-center mb-3" style="display: none;">' +
+                '<img src="" class="img-fluid rounded shadow-sm" style="max-height: 200px; object-fit: contain;">' +
+            '</div>' +
             '<label class="form-label text-muted small fw-bold text-uppercase">Texto Explicativo</label>' +
             '<textarea name="slide_texto" class="form-control" rows="2" placeholder="Descreva o que o vendedor deve fazer nesta etapa..." required></textarea>';
         container.appendChild(div);
+        window.recalcularSlides();
     };
 
     window.abrirTutorial = async function(id, titulo) {
         document.getElementById('tituloTutorialVer').innerHTML = '<i class="fa-solid fa-graduation-cap me-2 text-primary"></i> ' + titulo;
         var inner = document.getElementById('carouselTutorialInner');
+        var progressWrapper = document.getElementById('tutorialProgressWrapper');
+        
+        // Esconde e reseta a barra global para carregar limpo
+        progressWrapper.style.setProperty('display', 'none', 'important');
+        document.getElementById('tutorialProgressBar').style.width = '0%';
+        
         inner.innerHTML = '<div class="text-center w-100 p-5"><i class="fa-solid fa-spinner fa-spin fa-3x text-primary"></i></div>';
         
         new bootstrap.Modal(document.getElementById('modalVerTutorial')).show();
@@ -1287,20 +1539,43 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
         try {
             var res = await fetch('/admin/tutorial/' + id + '/slides');
             var slides = await res.json();
+            window.currentTutorialSlides = slides; // Salvar para a animação
             
             if(slides.length === 0) {
                 inner.innerHTML = '<div class="p-5 text-muted w-100">Este tutorial não possui slides.</div>';
                 return;
             }
 
+            // Exibe a barra de progresso global
+            document.getElementById('tutorialStepText').innerText = 'Passo 1';
+            document.getElementById('tutorialTotalText').innerText = 'Total: ' + slides.length;
+            progressWrapper.style.setProperty('display', 'flex', 'important');
+            
+            setTimeout(() => {
+                document.getElementById('tutorialProgressBar').style.width = ((1 / slides.length) * 100) + '%';
+            }, 100);
+
             var html = '';
             slides.forEach(function(s, i) {
                 var active = i === 0 ? 'active' : '';
-                html += '<div class="carousel-item w-100 ' + active + '">' +
-                            '<div class="p-4 d-flex flex-column align-items-center justify-content-center" style="height: 100%;">' +
-                                '<img src="' + s.imagem_url + '" class="img-fluid rounded shadow mb-4" style="max-height: 40vh; object-fit: contain;">' +
-                                '<div class="bg-dark p-3 rounded border border-secondary-subtle" style="width: 80%;">' +
-                                    '<p class="text-light mb-0" style="font-size: 1rem;">' + s.texto + '</p>' +
+                
+                html += '<div class="carousel-item w-100 h-100 ' + active + '">' +
+                            '<div class="p-4 d-flex flex-column align-items-center justify-content-center w-100 h-100">' +
+                                '<div class="row w-100 align-items-center justify-content-center m-0" style="max-width: 95%;">' +
+                                    
+                                    '<!-- Lado Esquerdo: Imagem -->' +
+                                    '<div class="col-12 col-lg-7 text-center mb-4 mb-lg-0 px-2">' +
+                                        '<img src="' + s.imagem_url + '" class="img-fluid rounded shadow-sm border border-secondary-subtle" style="max-height: 55vh; object-fit: contain;">' +
+                                    '</div>' +
+                                    
+                                    '<!-- Lado Direito: Texto -->' +
+                                    '<div class="col-12 col-lg-5 px-3">' +
+                                        '<div class="bg-dark p-4 rounded border border-secondary-subtle custom-scrollbar" style="max-height: 55vh; overflow-y: auto; text-align: left; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">' +
+                                            '<h6 class="text-primary fw-bold mb-3 border-bottom border-secondary pb-2"><i class="fa-solid fa-circle-info me-2"></i>Instruções</h6>' +
+                                            '<p class="text-light mb-0" style="font-size: 1rem; white-space: pre-wrap; line-height: 1.6;">' + s.texto + '</p>' +
+                                        '</div>' +
+                                    '</div>' +
+
                                 '</div>' +
                             '</div>' +
                         '</div>';
@@ -1310,65 +1585,6 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             inner.innerHTML = '<div class="p-5 text-danger w-100">Erro ao carregar tutorial.</div>';
         }
     };
-    
-    // ANIMAÇÕES DE NÚMEROS E PROGRESSO (Acontece no onLoad)
-    setTimeout(function() {
-        const progressBar = document.querySelector('.progress-bar-animate');
-        const progressText = document.querySelector('.progress-text-animate');
-        if (progressBar && progressText) {
-            const targetWidth = parseFloat(progressBar.getAttribute('data-width')) || 0;
-            progressBar.style.width = targetWidth + '%';
-            progressBar.style.transition = 'width 1.5s cubic-bezier(0.22, 1, 0.36, 1)';
-            
-            let startTimestamp = null;
-            const duration = 1500;
-            const step = function(timestamp) {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const easeProgress = 1 - Math.pow(1 - progress, 4);
-                const currentVal = (easeProgress * targetWidth).toFixed(1);
-                progressText.innerText = currentVal + '%';
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    progressText.innerText = targetWidth.toFixed(1) + '%';
-                }
-            };
-            window.requestAnimationFrame(step);
-        }
-
-        const counters = document.querySelectorAll('.counter-animate');
-        counters.forEach(function(counter) {
-            const target = parseFloat(counter.getAttribute('data-val')) || 0;
-            const isCurrency = counter.getAttribute('data-currency') === 'true';
-            const isPercent = counter.getAttribute('data-percent') === 'true';
-            const duration = 1500;
-            let startTimestamp = null;
-
-            const formatVal = function(val) {
-                if (isCurrency) return Number(val).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-                if (isPercent) return val.toFixed(1) + '%';
-                return Math.floor(val);
-            };
-
-            counter.innerText = formatVal(0);
-
-            const step = function(timestamp) {
-                if (!startTimestamp) startTimestamp = timestamp;
-                const progress = Math.min((timestamp - startTimestamp) / duration, 1);
-                const easeProgress = 1 - Math.pow(1 - progress, 4);
-                const currentVal = easeProgress * target;
-                
-                counter.innerText = formatVal(currentVal);
-                if (progress < 1) {
-                    window.requestAnimationFrame(step);
-                } else {
-                    counter.innerText = formatVal(target);
-                }
-            };
-            window.requestAnimationFrame(step);
-        });
-    }, 100);
     </script>
     `);
 };

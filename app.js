@@ -312,10 +312,26 @@ app.post('/vendedor/recorrencia', checarAuth, async (req, res) => {
   res.redirect('/vendedor');
 });
 
+// ==========================================
+// ROTA PARA ATUALIZAR O STATUS DO PÓS-VENDA
+// ==========================================
+app.post('/vendedor/posvenda', checarAuth, async (req, res) => {
+  const { id, pos_venda } = req.body;
+  const vendedorId = req.session.usuario.id;
+  
+  await db.query('UPDATE clientes SET pos_venda = ? WHERE id = ? AND vendedor_id = ?', [pos_venda, id, vendedorId]);
+  await recalcularTodasAsPontuacoes();
+  
+  res.redirect('/vendedor');
+});
+
 app.post('/admin/faturamento-manual', checarAuth, async (req, res) => {
     if (req.session.usuario.tipo !== 'admin') return res.redirect('/vendedor');
     const { vendedor_id, faturamento_manual } = req.body;
-    await db.query('UPDATE usuarios SET faturamento_manual = ? WHERE id = ?', [faturamento_manual || 0, vendedor_id]);
+    
+    // Atualizado: Salva o momento exato da alteração usando NOW()
+    await db.query('UPDATE usuarios SET faturamento_manual = ?, data_atualizacao_faturamento = NOW() WHERE id = ?', [faturamento_manual || 0, vendedor_id]);
+    
     await recalcularTodasAsPontuacoes();
     res.redirect('/admin');
 });
@@ -325,7 +341,8 @@ app.post('/admin/faturamento-manual', checarAuth, async (req, res) => {
 // ==========================================
 app.post('/vendedor/cliente', checarAuth, async (req, res) => {
   const vendedor = req.session.usuario;
-  const { nome, prospeccao, fechou, valor_venda, carteira, parado, cliente_grande, regiao, observacao, data_prospeccao, data_fechamento } = req.body;
+  // Extraindo o numero_lead do corpo da requisição
+  const { nome, numero_lead, prospeccao, fechou, valor_venda, carteira, parado, cliente_grande, regiao, observacao, data_prospeccao, data_fechamento } = req.body;
 
   const isCarteira = carteira === 'sim' ? 'sim' : 'nao';
   const isParado = parado === 'sim' ? 'sim' : 'nao';
@@ -333,9 +350,9 @@ app.post('/vendedor/cliente', checarAuth, async (req, res) => {
 
   await db.query(`
         INSERT INTO clientes 
-        (vendedor_id, nome, prospeccao, fechou, valor_venda, carteira, parado, cliente_grande, regiao, observacao, data_prospeccao, data_fechamento) 
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    [vendedor.id, nome, prospeccao, fechou, valor_venda || 0, isCarteira, isParado, isGrande, regiao, observacao, data_prospeccao || null, data_fechamento || null]
+        (vendedor_id, nome, numero_lead, prospeccao, fechou, valor_venda, carteira, parado, cliente_grande, regiao, observacao, data_prospeccao, data_fechamento) 
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [vendedor.id, nome, numero_lead || null, prospeccao, fechou, valor_venda || 0, isCarteira, isParado, isGrande, regiao, observacao, data_prospeccao || null, data_fechamento || null]
   );
   await recalcularTodasAsPontuacoes();
   res.redirect('/vendedor');
@@ -343,7 +360,8 @@ app.post('/vendedor/cliente', checarAuth, async (req, res) => {
 
 app.post('/vendedor/cliente/editar', checarAuth, async (req, res) => {
   const vendedor = req.session.usuario;
-  const { id, nome, prospeccao, fechou, valor_venda, carteira, parado, cliente_grande, regiao, observacao, data_prospeccao, data_fechamento } = req.body;
+  // Extraindo o numero_lead do corpo da requisição
+  const { id, nome, numero_lead, prospeccao, fechou, valor_venda, carteira, parado, cliente_grande, regiao, observacao, data_prospeccao, data_fechamento } = req.body;
 
   const isCarteira = carteira === 'sim' ? 'sim' : 'nao';
   const isParado = parado === 'sim' ? 'sim' : 'nao';
@@ -353,9 +371,9 @@ app.post('/vendedor/cliente/editar', checarAuth, async (req, res) => {
 
   await db.query(`
         UPDATE clientes SET 
-            nome = ?, prospeccao = ?, fechou = ?, valor_venda = ?, carteira = ?, parado = ?, cliente_grande = ?, regiao = ?, observacao = ?, data_prospeccao = ?, data_fechamento = ?
+            nome = ?, numero_lead = ?, prospeccao = ?, fechou = ?, valor_venda = ?, carteira = ?, parado = ?, cliente_grande = ?, regiao = ?, observacao = ?, data_prospeccao = ?, data_fechamento = ?
         WHERE id = ? AND vendedor_id = ?`,
-    [nome, prospeccao, fechou, valor_venda || 0, isCarteira, isParado, isGrande, regiao, observacao || null, dataProspFormatada, dataFechFormatada, id, vendedor.id]
+    [nome, numero_lead || null, prospeccao, fechou, valor_venda || 0, isCarteira, isParado, isGrande, regiao, observacao || null, dataProspFormatada, dataFechFormatada, id, vendedor.id]
   );
   await recalcularTodasAsPontuacoes();
   res.redirect('/vendedor');
@@ -850,7 +868,28 @@ app.get('/vendedor', checarAuth, async (req, res) => {
         kpis[0].valor_total_vendas = Number(kpis[0].valor_total_vendas || 0) + Number(req.session.usuario.faturamento_manual || 0);
     }
 
-    res.send(vendedorView(req.session.usuario, clientes, metas, kpis[0] || {}, metaGlobal, alcancadoGlobal, usuarios, todosClientes));
+    // ==========================================
+    // BUSCA OS TUTORIAIS PARA A LISTAGEM
+    // ==========================================
+    const [tutoriaisDb] = await db.query(`
+        SELECT t.*, COUNT(s.id) as qtd_slides 
+        FROM tutoriais t 
+        LEFT JOIN tutorial_slides s ON t.id = s.tutorial_id 
+        GROUP BY t.id 
+        ORDER BY t.data_criacao DESC
+    `);
+
+    res.send(vendedorView(
+        req.session.usuario, 
+        clientes, 
+        metas, 
+        kpis[0] || {}, 
+        metaGlobal, 
+        alcancadoGlobal, 
+        usuarios, 
+        todosClientes, 
+        tutoriaisDb
+    ));
 });
 
 // Salvar Meta Global (Apenas Admin)
