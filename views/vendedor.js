@@ -505,7 +505,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                     <input type="text" name="nome" class="form-control mb-3" value="${c.nome}" required>
                                 </div>
                                 <div class="col-md-5">
-                                    <label class="form-label small text-muted">Número do Lead</label>
+                                    <label class="form-label small text-muted">Contato</label>
                                     <input type="text" name="numero_lead" class="form-control mb-3 mascara-telefone" value="${c.numero_lead || ''}" placeholder="(00) 00000-0000" maxlength="15">
                                 </div>
                             </div>
