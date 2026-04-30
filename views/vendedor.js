@@ -564,7 +564,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                         </div>
                         <div class="modal-footer border-0 bg-light">
                             <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                            <button type="submit" class="btn btn-dark fw-bold px-4">Salvar Mudanças</button>
+                            <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                         </div>
                     </form>
                 </div>
@@ -854,7 +854,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
                             <div>
                                 <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i> Conquistas de ${u.nome}</h5>
-                                <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star text-dark me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span> Pontos Totais</span>
+                                <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star text-dark me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span> Pontos</span>
                             </div>
                             <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                         </div>
