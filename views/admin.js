@@ -323,7 +323,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                             <div class="card shadow-sm border-start border-${corGlobal} border-2 rounded-3 w-100 border-top-0 border-end-0 border-bottom-0 position-relative ${glowGlobal}">
                                 <span class="position-absolute top-0 end-0 badge bg-${corGlobal} mt-2 me-2 text-uppercase shadow-sm" style="font-size: 0.6rem; letter-spacing: 0.5px;">${mesNome}</span>
                                 <div class="card-body text-center bg-white d-flex flex-column justify-content-center py-4">
-                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral da Empresa</h6>
+                                    <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.85rem;"><i class="fa-solid fa-earth-americas text-${corGlobal} me-2"></i> Meta Geral</h6>
                                     
                                     <div class="progress mb-3 shadow-sm position-relative" style="height: 35px; border-radius: 25px; background-color: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1);">
                                         <div class="progress-bar ${fluidClass} progress-bar-animate" role="progressbar" data-width="${porcentagem}" style="width: 0%;"></div>
