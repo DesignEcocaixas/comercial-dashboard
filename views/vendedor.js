@@ -635,7 +635,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                 </select>
                             </div>
                             <div class="col-6">
-                                <label class="form-label small text-muted">Venda?</label>
+                                <label class="form-label small text-muted">Venda</label>
                                 <select name="fechou" class="form-select mb-3" required>
                                     <option value="">Selecione...</option>
                                     <option value="sim">Fechada</option>
@@ -681,7 +681,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                     </div>
                     <div class="modal-footer border-0 bg-light">
                         <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-check-circle me-1"></i> Salvar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
                     </div>
                 </form>
             </div>
