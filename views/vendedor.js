@@ -620,7 +620,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                 <input type="text" name="nome" class="form-control mb-3" required placeholder="Ex: Pizzaria A">
                             </div>
                             <div class="col-md-5">
-                                <label class="form-label small text-muted">Contato Lead (Opcional)</label>
+                                <label class="form-label small text-muted">Contato</label>
                                 <input type="text" name="numero_lead" class="form-control mb-3 mascara-telefone" placeholder="(00) 00000-0000" maxlength="15">
                             </div>
                         </div>
