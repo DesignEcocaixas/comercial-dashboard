@@ -45,8 +45,8 @@ module.exports = (usuario) => {
             </div>
 
             <small class="text-muted fw-bold px-3 mb-2 d-block text-uppercase" style="font-size: 0.65rem; letter-spacing: 1px;">Navegação</small>
-            <a href="#" class="nav-link text-light mb-1" data-bs-toggle="modal" data-bs-target="#modalCliente"><i class="fa-solid fa-plus-circle me-2 text-primary"></i> Registrar Venda</a>
             <a href="/vendedor" class="nav-link text-light mb-1 active"><i class="fa-solid fa-chart-line me-2 text-primary"></i> Meu Dashboard</a>
+            <a href="#" class="nav-link text-light mb-1" data-bs-toggle="modal" data-bs-target="#modalCliente"><i class="fa-solid fa-plus-circle me-2 text-primary"></i> Nova Venda</a>
             <a href="/vendedor/arquivados" class="nav-link text-light mb-1"><i class="fa-solid fa-box-archive me-2 text-primary"></i> Clientes Arquivados</a>
         `;
     }
