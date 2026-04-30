@@ -616,7 +616,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                         
                         <div class="row">
                             <div class="col-md-7">
-                                <label class="form-label small text-muted">Nome da Empresa / Cliente</label>
+                                <label class="form-label small text-muted">Cliente</label>
                                 <input type="text" name="nome" class="form-control mb-3" required placeholder="Ex: Pizzaria A">
                             </div>
                             <div class="col-md-5">
@@ -661,15 +661,15 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                         <div class="card bg-light p-3 border-0 mb-3 shadow-sm">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="carteira" value="sim" id="carteira">
-                                <label class="form-check-label small" for="carteira">Cliente da Carteira Atual?</label>
+                                <label class="form-check-label small" for="carteira">Cliente da Carteira</label>
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="parado" value="sim" id="parado">
-                                <label class="form-check-label small" for="parado">Reativação (Cliente Inativo)?</label>
+                                <label class="form-check-label small" for="parado">Reativação</label>
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="cliente_grande">
-                                <label class="form-check-label small" for="cliente_grande">Marcar como Cliente Grande VIP?</label>
+                                <label class="form-check-label small" for="cliente_grande">Cliente Grande</label>
                             </div>
                         </div>
                         
@@ -681,7 +681,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                     </div>
                     <div class="modal-footer border-0 bg-light">
                         <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-check-circle me-1"></i> Salvar e Computar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-check-circle me-1"></i> Salvar</button>
                     </div>
                 </form>
             </div>
