@@ -609,7 +609,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             <div class="modal-content border-0 animate-modal">
                 <form action="/vendedor/cliente" method="POST">
                     <div class="modal-header bg-dark text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2 text-primary"></i> Novo Registro Comercial</h5>
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2 text-primary"></i> Nova Venda</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4">
