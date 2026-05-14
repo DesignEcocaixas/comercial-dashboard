@@ -351,29 +351,48 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="col-lg-4 col-md-6 mb-3 mb-md-0 d-flex animate-up" style="animation-delay: 0.2s;">
                         <div class="card shadow-sm rounded-3 border w-100">
                             <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                                <span class="fw-bold" style="font-size: 0.9rem;"><i class="fa-solid fa-trophy text-warning me-2"></i> Rank de Performance</span>
+                                <span class="fw-bold" style="font-size: 0.9rem;">
+                                    <i class="fa-solid fa-trophy text-warning me-2"></i> Pontuação
+                                </span>
                             </div>
-                            <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
+
+                            <div class="card-body p-0">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="bg-light" style="font-size: 0.75rem;">
-                                        <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Pontos</th></tr>
+                                        <tr>
+                                            <th class="ps-3 py-2 text-muted">Vendedor</th>
+                                            <th class="text-end pe-3 py-2 text-muted">Pontos</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         ${[...usuarios].filter(u => u.tipo === 'vendedor').sort((a, b) => b.pontuacao - a.pontuacao).map((u, index) => `
-                                            <tr style="cursor: pointer; transition: 0.2s;" onmouseover="this.classList.add('bg-light')" onmouseout="this.classList.remove('bg-light')" data-bs-toggle="modal" data-bs-target="#modalPontosUsuario${u.id}" title="Ver Conquistas">
+                                            <tr style="cursor: pointer; transition: 0.2s;" 
+                                                onmouseover="this.classList.add('bg-light')" 
+                                                onmouseout="this.classList.remove('bg-light')" 
+                                                data-bs-toggle="modal" 
+                                                data-bs-target="#modalPontosUsuario${u.id}" 
+                                                title="Ver Conquistas">
+
                                                 <td class="ps-3 py-2">
                                                     <div class="d-flex align-items-center">
                                                         <div class="position-relative me-2">
                                                             <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
                                                             ${index === 0 ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.55rem;"><i class="fa-solid fa-crown"></i></span>' : ''}
                                                         </div>
+
                                                         <div class="d-flex flex-column">
                                                             <span class="fw-bold text-dark" style="font-size: 0.85rem;">${u.nome}</span>
                                                             <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">${u.setor}</span>
                                                         </div>
                                                     </div>
                                                 </td>
-                                                <td class="text-end pe-3 py-2"><strong class="text-success"><i class="fa-solid fa-star text-warning small me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span></strong></td>
+
+                                                <td class="text-end pe-3 py-2">
+                                                    <strong class="text-success">
+                                                        <i class="fa-solid fa-star text-warning small me-1"></i>
+                                                        <span class="counter-animate" data-val="${u.pontuacao}">0</span>
+                                                    </strong>
+                                                </td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -385,21 +404,25 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                     <div class="col-lg-4 col-md-6 d-flex animate-up" style="animation-delay: 0.3s;">
                         <div class="card shadow-sm rounded-3 border w-100">
                             <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                            <span class="fw-bold d-flex align-items-center" style="font-size: 0.9rem;">
-                                <i class="fa-solid fa-sack-dollar text-success me-2"></i>
-                                Vendas
-                            </span>
-                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium"
-                                style="font-size: 0.65rem; letter-spacing: 0px;"
-                                title="Momento da última modificação manual do Admin">
-                                <i class="fa-solid fa-clock me-1"></i>
-                                Atualizado: ${dataExibicaoRank}
-                            </span>
-                        </div>
-                            <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
+                                <span class="fw-bold d-flex align-items-center" style="font-size: 0.9rem;">
+                                    <i class="fa-solid fa-sack-dollar text-success me-2"></i>
+                                    Vendas
+                                </span>
+                                <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium"
+                                    style="font-size: 0.65rem; letter-spacing: 0px;"
+                                    title="Momento da última modificação manual do Admin">
+                                    <i class="fa-solid fa-clock me-1"></i>
+                                    Atualizado: ${dataExibicaoRank}
+                                </span>
+                            </div>
+
+                            <div class="card-body p-0">
                                 <table class="table table-hover align-middle mb-0">
                                     <thead class="bg-light" style="font-size: 0.75rem;">
-                                        <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Faturamento</th></tr>
+                                        <tr>
+                                            <th class="ps-3 py-2 text-muted">Vendedor</th>
+                                            <th class="text-end pe-3 py-2 text-muted">Faturamento</th>
+                                        </tr>
                                     </thead>
                                     <tbody>
                                         ${(() => {
@@ -413,7 +436,12 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                             rankingFaturamento.sort((a, b) => b.totalVendido - a.totalVendido);
 
                                             return rankingFaturamento.map((u, index) => `
-                                                <tr style="cursor: pointer; transition: 0.2s;" onmouseover="this.classList.add('bg-light')" onmouseout="this.classList.remove('bg-light')" data-bs-toggle="modal" data-bs-target="#modalFaturamentoManual${u.id}" title="Ajustar Faturamento Manualmente">
+                                                <tr style="cursor: pointer; transition: 0.2s;"
+                                                    onmouseover="this.classList.add('bg-light')"
+                                                    onmouseout="this.classList.remove('bg-light')"
+                                                    data-bs-toggle="modal"
+                                                    data-bs-target="#modalFaturamentoManual${u.id}"
+                                                    title="Ajustar Faturamento Manualmente">
                                                     <td class="ps-3 py-2">
                                                         <div class="d-flex align-items-center">
                                                             <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
@@ -421,7 +449,10 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
                                                         </div>
                                                     </td>
                                                     <td class="text-end pe-3 py-2">
-                                                        <strong class="text-success" style="font-size: 0.9rem;"><span class="counter-animate" data-val="${u.totalVendido}" data-currency="true">R$ 0,00</span> <i class="fa-solid fa-pen-to-square text-muted ms-1" style="font-size: 0.75rem;"></i></strong>
+                                                        <strong class="text-success" style="font-size: 0.9rem;">
+                                                            <span class="counter-animate" data-val="${u.totalVendido}" data-currency="true">R$ 0,00</span>
+                                                            <i class="fa-solid fa-pen-to-square text-muted ms-1" style="font-size: 0.75rem;"></i>
+                                                        </strong>
                                                     </td>
                                                 </tr>
                                             `).join('');
@@ -903,7 +934,7 @@ module.exports = (usuarioLogado, usuarios, metas, kpis, metaGlobal, alcancadoGlo
             const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
             const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
             const kpiReativ = clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim').length;
-            const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.fechou === 'sim').length;
+            const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.regiao.trim().toLowerCase() !== 'camaçari' && c.regiao.trim().toLowerCase() !== 'camacari' && c.fechou === 'sim').length;
             const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
             const kpiFidel = clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim').length;
             const taxaInd = kpiCarteira > 0 ? (kpiFidel / kpiCarteira) * 100 : 0;

@@ -285,29 +285,48 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                 <div class="col-lg-4 col-md-6 mb-3 mb-md-0 d-flex animate-up" style="animation-delay: 0.2s;">
                     <div class="card shadow-sm rounded-3 border w-100">
                         <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                            <span class="fw-bold" style="font-size: 0.9rem;"><i class="fa-solid fa-trophy text-warning me-2"></i> Pontuação</span>
+                            <span class="fw-bold" style="font-size: 0.9rem;">
+                                <i class="fa-solid fa-trophy text-warning me-2"></i> Pontuação
+                            </span>
                         </div>
-                        <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
+
+                        <div class="card-body p-0">
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="bg-light" style="font-size: 0.75rem;">
-                                    <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Pontos</th></tr>
+                                    <tr>
+                                        <th class="ps-3 py-2 text-muted">Vendedor</th>
+                                        <th class="text-end pe-3 py-2 text-muted">Pontos</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     ${[...usuarios].sort((a, b) => b.pontuacao - a.pontuacao).map((u, index) => `
-                                        <tr style="cursor: pointer; transition: 0.2s; ${u.id === usuario.id ? 'background-color: rgba(13, 110, 253, 0.15); border-left: 3px solid #0d6efd;' : ''}" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'" onmouseout="this.style.backgroundColor='${u.id === usuario.id ? 'rgba(13, 110, 253, 0.15)' : 'transparent'}'" data-bs-toggle="modal" data-bs-target="#modalPontosUsuario${u.id}" title="Ver Conquistas">
+                                        <tr style="cursor: pointer; transition: 0.2s; ${u.id === usuario.id ? 'background-color: rgba(13, 110, 253, 0.15); border-left: 3px solid #0d6efd;' : ''}" 
+                                            onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'" 
+                                            onmouseout="this.style.backgroundColor='${u.id === usuario.id ? 'rgba(13, 110, 253, 0.15)' : 'transparent'}'" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#modalPontosUsuario${u.id}" 
+                                            title="Ver Conquistas">
+
                                             <td class="ps-3 py-2">
                                                 <div class="d-flex align-items-center">
                                                     <div class="position-relative me-2">
                                                         <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border shadow-sm" style="object-fit: cover;">
                                                         ${index === 0 ? '<span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-warning text-dark" style="font-size: 0.55rem;"><i class="fa-solid fa-crown"></i></span>' : ''}
                                                     </div>
+
                                                     <div class="d-flex flex-column">
                                                         <span class="fw-bold ${u.id === usuario.id ? 'text-primary' : 'text-dark'}" style="font-size: 0.85rem;">${u.nome}</span>
                                                         <span class="text-muted" style="font-size: 0.65rem; text-transform: uppercase;">${u.setor}</span>
                                                     </div>
                                                 </div>
                                             </td>
-                                            <td class="text-end pe-3 py-2"><strong class="text-warning"><i class="fa-solid fa-star text-warning small me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span></strong></td>
+
+                                            <td class="text-end pe-3 py-2">
+                                                <strong class="text-warning">
+                                                    <i class="fa-solid fa-star text-warning small me-1"></i> 
+                                                    <span class="counter-animate" data-val="${u.pontuacao}">0</span>
+                                                </strong>
+                                            </td>
                                         </tr>
                                     `).join('')}
                                 </tbody>
@@ -319,21 +338,24 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                 <div class="col-lg-4 col-md-6 d-flex animate-up" style="animation-delay: 0.3s;">
                     <div class="card shadow-sm rounded-3 border w-100">
                         <div class="card-header bg-white py-3 border-0 d-flex justify-content-between align-items-center">
-                        <span class="fw-bold d-flex align-items-center" style="font-size: 0.9rem;">
-                            <i class="fa-solid fa-sack-dollar text-success me-2"></i>
-                            Vendas
-                        </span>
-                        <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium"
-                            style="font-size: 0.65rem; letter-spacing: 0px;"
-                            title="Atualizado">
-                            <i class="fa-solid fa-clock me-1"></i>
-                            Atualizado: ${dataExibicaoRank}
-                        </span>
-                    </div>
-                        <div class="card-body p-0 overflow-auto" style="max-height: 180px;">
+                            <span class="fw-bold d-flex align-items-center" style="font-size: 0.9rem;">
+                                <i class="fa-solid fa-sack-dollar text-success me-2"></i> Vendas (R$)
+                            </span>
+
+                            <span class="badge bg-success-subtle text-success border border-success-subtle fw-medium" 
+                                style="font-size: 0.65rem; letter-spacing: 0px;" 
+                                title="Atualizado">
+                                <i class="fa-solid fa-clock me-1"></i> Atualizado: ${dataExibicaoRank}
+                            </span>
+                        </div>
+
+                        <div class="card-body p-0">
                             <table class="table table-hover align-middle mb-0">
                                 <thead class="bg-light" style="font-size: 0.75rem;">
-                                    <tr><th class="ps-3 py-2 text-muted">Vendedor</th><th class="text-end pe-3 py-2 text-muted">Faturamento</th></tr>
+                                    <tr>
+                                        <th class="ps-3 py-2 text-muted">Vendedor</th>
+                                        <th class="text-end pe-3 py-2 text-muted">Faturamento</th>
+                                    </tr>
                                 </thead>
                                 <tbody>
                                     ${(() => {
@@ -347,15 +369,21 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                         rankingFaturamento.sort((a, b) => b.totalVendido - a.totalVendido);
 
                                         return rankingFaturamento.map((u, index) => `
-                                            <tr style="transition: 0.2s; ${u.id === usuario.id ? 'background-color: rgba(13, 110, 253, 0.15); border-left: 3px solid #0d6efd;' : ''}" onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'" onmouseout="this.style.backgroundColor='${u.id === usuario.id ? 'rgba(13, 110, 253, 0.15)' : 'transparent'}'">
+                                            <tr style="transition: 0.2s; ${u.id === usuario.id ? 'background-color: rgba(13, 110, 253, 0.15); border-left: 3px solid #0d6efd;' : ''}" 
+                                                onmouseover="this.style.backgroundColor='rgba(255,255,255,0.05)'" 
+                                                onmouseout="this.style.backgroundColor='${u.id === usuario.id ? 'rgba(13, 110, 253, 0.15)' : 'transparent'}'">
+
                                                 <td class="ps-3 py-2">
                                                     <div class="d-flex align-items-center">
                                                         <img src="${u.foto || 'https://via.placeholder.com/40'}" width="32" height="32" class="rounded-circle border me-2 shadow-sm" style="object-fit: cover;">
                                                         <span class="fw-bold ${u.id === usuario.id ? 'text-primary' : 'text-dark'}" style="font-size: 0.85rem;">${u.nome}</span>
                                                     </div>
                                                 </td>
+
                                                 <td class="text-end pe-3 py-2">
-                                                    <strong class="text-success" style="font-size: 0.9rem;"><span class="counter-animate" data-val="${u.totalVendido}" data-currency="true">R$ 0,00</span></strong>
+                                                    <strong class="text-success" style="font-size: 0.9rem;">
+                                                        <span class="counter-animate" data-val="${u.totalVendido}" data-currency="true">R$ 0,00</span>
+                                                    </strong>
                                                 </td>
                                             </tr>
                                         `).join('');
@@ -451,7 +479,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                             <form action="/vendedor/posvenda" method="POST" class="d-inline">
                                                 <input type="hidden" name="id" value="${c.id}">
                                                 <select name="pos_venda" class="form-select form-select-sm d-inline w-auto bg-light-subtle border-0 py-1" onchange="this.form.submit()">
-                                                    <option value="pendente" ${c.pos_venda === 'pendente' ? 'selected' : ''}>⏳ Pendente</option>
+                                                    <option value="pendente" ${c.pos_venda === 'pendente' || !c.pos_venda ? 'selected' : ''}>⏳ Pendente</option>
                                                     <option value="sim" ${c.pos_venda === 'sim' ? 'selected' : ''}>✅ Feito</option>
                                                     <option value="nao" ${c.pos_venda === 'nao' ? 'selected' : ''}>❌ Não</option>
                                                 </select>
@@ -486,14 +514,13 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
         </div> 
     </div>
 
-    <!-- Renderizando os Modais FORA da Tabela para evitar bug de z-index do Bootstrap -->
     ${clientes.map(c => `
         <div class="modal fade" id="modalEditar${c.id}" tabindex="-1">
             <div class="modal-dialog modal-dialog-centered">
                 <div class="modal-content border-0 shadow-lg animate-modal">
                     <form action="/vendedor/cliente/editar" method="POST">
                         <div class="modal-header bg-dark text-white border-0">
-                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-edit me-2 text-primary"></i> Ajustar Registro</h5>
+                            <h5 class="modal-title fw-bold"><i class="fa-solid fa-edit me-2 text-primary"></i> Atualizar</h5>
                             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div class="modal-body p-4">
@@ -505,24 +532,34 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                                     <input type="text" name="nome" class="form-control mb-3" value="${c.nome}" required>
                                 </div>
                                 <div class="col-md-5">
-                                    <label class="form-label small text-muted">ContatoLead</label>
+                                    <label class="form-label small text-muted">Número do Lead</label>
                                     <input type="text" name="numero_lead" class="form-control mb-3 mascara-telefone" value="${c.numero_lead || ''}" placeholder="(00) 00000-0000" maxlength="15">
                                 </div>
                             </div>
                             
                             <div class="row">
-                                <div class="col-6">
+                                <div class="col-12 col-md-4">
                                     <label class="form-label small text-muted">Origem</label>
                                     <select name="prospeccao" class="form-select mb-3">
+                                        <option value="" ${!c.prospeccao || c.prospeccao === '' ? 'selected' : ''}>Não definido</option>
                                         <option value="com_visita" ${c.prospeccao === 'com_visita' ? 'selected' : ''}>Com Visita</option>
                                         <option value="sem_visita" ${c.prospeccao === 'sem_visita' ? 'selected' : ''}>Sem Visita</option>
                                     </select>
                                 </div>
-                                <div class="col-6">
+                                <div class="col-12 col-md-4">
                                     <label class="form-label small text-muted">Status</label>
                                     <select name="fechou" class="form-select mb-3">
+                                        <option value="" ${!c.fechou || c.fechou === '' ? 'selected' : ''}>Não definido</option>
                                         <option value="sim" ${c.fechou === 'sim' ? 'selected' : ''}>Fechado</option>
                                         <option value="nao" ${c.fechou === 'nao' ? 'selected' : ''}>Pendente</option>
+                                    </select>
+                                </div>
+                                <div class="col-12 col-md-4">
+                                    <label class="form-label small text-muted">Pós-Venda</label>
+                                    <select name="pos_venda" class="form-select mb-3">
+                                        <option value="pendente" ${c.pos_venda === 'pendente' || !c.pos_venda ? 'selected' : ''}>Pendente</option>
+                                        <option value="sim" ${c.pos_venda === 'sim' ? 'selected' : ''}>Feito</option>
+                                        <option value="nao" ${c.pos_venda === 'nao' ? 'selected' : ''}>Não</option>
                                     </select>
                                 </div>
                             </div>
@@ -609,37 +646,45 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
             <div class="modal-content border-0 animate-modal">
                 <form action="/vendedor/cliente" method="POST">
                     <div class="modal-header bg-dark text-white border-0">
-                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2 text-primary"></i> Nova Venda</h5>
+                        <h5 class="modal-title fw-bold"><i class="fa-solid fa-plus-circle me-2 text-primary"></i> Nova venda</h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body p-4">
                         
                         <div class="row">
                             <div class="col-md-7">
-                                <label class="form-label small text-muted">Cliente</label>
+                                <label class="form-label small text-muted">Nome da Empresa / Cliente</label>
                                 <input type="text" name="nome" class="form-control mb-3" required placeholder="Ex: Pizzaria A">
                             </div>
                             <div class="col-md-5">
-                                <label class="form-label small text-muted">Contato</label>
+                                <label class="form-label small text-muted">Número do Lead (Opcional)</label>
                                 <input type="text" name="numero_lead" class="form-control mb-3 mascara-telefone" placeholder="(00) 00000-0000" maxlength="15">
                             </div>
                         </div>
                         
                         <div class="row">
-                            <div class="col-6">
+                            <div class="col-12 col-md-4">
                                 <label class="form-label small text-muted">Origem</label>
-                                <select name="prospeccao" class="form-select mb-3" required>
-                                    <option value="">Selecione...</option>
+                                <select name="prospeccao" class="form-select mb-3">
+                                    <option value="">Não definido</option>
                                     <option value="com_visita">Com Visita</option>
                                     <option value="sem_visita">Sem Visita</option>
                                 </select>
                             </div>
-                            <div class="col-6">
-                                <label class="form-label small text-muted">Venda</label>
-                                <select name="fechou" class="form-select mb-3" required>
-                                    <option value="">Selecione...</option>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small text-muted">Venda?</label>
+                                <select name="fechou" class="form-select mb-3">
+                                    <option value="">Não definido</option>
                                     <option value="sim">Fechada</option>
                                     <option value="nao">Pendente</option>
+                                </select>
+                            </div>
+                            <div class="col-12 col-md-4">
+                                <label class="form-label small text-muted">Pós-Venda</label>
+                                <select name="pos_venda" class="form-select mb-3" required>
+                                    <option value="pendente">Pendente</option>
+                                    <option value="sim">Feito</option>
+                                    <option value="nao">Não</option>
                                 </select>
                             </div>
                         </div>
@@ -661,15 +706,15 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                         <div class="card bg-light p-3 border-0 mb-3 shadow-sm">
                             <div class="form-check">
                                 <input class="form-check-input" type="checkbox" name="carteira" value="sim" id="carteira">
-                                <label class="form-check-label small" for="carteira">Cliente da Carteira</label>
+                                <label class="form-check-label small" for="carteira">Cliente da Carteira Atual?</label>
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="parado" value="sim" id="parado">
-                                <label class="form-check-label small" for="parado">Reativação</label>
+                                <label class="form-check-label small" for="parado">Reativação (Cliente Inativo)?</label>
                             </div>
                             <div class="form-check mt-2">
                                 <input class="form-check-input" type="checkbox" name="cliente_grande" value="sim" id="cliente_grande">
-                                <label class="form-check-label small" for="cliente_grande">Cliente Grande</label>
+                                <label class="form-check-label small" for="cliente_grande">Marcar como Cliente Grande VIP?</label>
                             </div>
                         </div>
                         
@@ -681,14 +726,13 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                     </div>
                     <div class="modal-footer border-0 bg-light">
                         <button type="button" class="btn btn-secondary fw-bold" data-bs-dismiss="modal">Cancelar</button>
-                        <button type="submit" class="btn btn-dark fw-bold px-4">Salvar</button>
+                        <button type="submit" class="btn btn-dark fw-bold px-4"><i class="fa-solid fa-check-circle me-1"></i> Salvar e Computar</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <!-- BOTÃO FLUTUANTE E MODAIS DE TUTORIAL NA VIEW DO VENDEDOR -->
     <div class="fab-tutorial" data-bs-toggle="modal" data-bs-target="#modalTutorialList" title="Tutoriais e Ajuda">
         <i class="fas fa-question-circle"></i>
     </div>
@@ -724,15 +768,13 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
     </div>
 
     <div class="modal fade" id="modalVerTutorial" tabindex="-1">
-        <div class="modal-dialog modal-xl modal-dialog-centered"> <!-- Aumentado para XL para melhor grid -->
-            <div class="modal-content border-0 shadow-lg animate-modal">
+        <div class="modal-dialog modal-xl modal-dialog-centered"> <div class="modal-content border-0 shadow-lg animate-modal">
                 <div class="modal-header bg-dark text-white border-0">
                     <h5 class="modal-title fw-bold" id="tituloTutorialVer"><i class="fa-solid fa-graduation-cap me-2 text-primary"></i> Tutorial</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body p-0 text-center" style="background: #0f0f0f; height: 75vh; display: flex; flex-direction: column; justify-content: flex-start; position: relative;">
                     
-                    <!-- Barra de progresso FIXA fora dos slides -->
                     <div id="tutorialProgressWrapper" class="w-100 d-flex justify-content-center pt-4 flex-shrink-0" style="display: none !important; z-index: 10;">
                         <div class="w-100 px-2 mb-2" style="max-width: 90%;">
                             <div class="d-flex justify-content-between text-light small mb-1 fw-bold">
@@ -745,7 +787,6 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                         </div>
                     </div>
 
-                    <!-- Carrossel ocupa o resto do espaço -->
                     <div id="carouselTutorial" class="carousel slide carousel-fade w-100 flex-grow-1" data-bs-ride="false" data-bs-wrap="false" style="overflow: hidden;">
                         <div class="carousel-inner h-100 d-flex align-items-center" id="carouselTutorialInner">
                         </div>
@@ -768,7 +809,6 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
         </div>
     </div>
 
-    <!-- MODAIS DE CONQUISTAS INDIVIDUAIS -->
     ${usuarios.filter(u => u.tipo === 'vendedor').map(u => {
         const clientesU = todosClientes.filter(c => c.vendedor_id === u.id);
         const kpiSem = clientesU.filter(c => c.prospeccao === 'sem_visita').length;
@@ -781,7 +821,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
         const kpiPos = clientesU.filter(c => c.pos_venda === 'sim').length;
         const kpiVisita = clientesU.filter(c => c.carteira === 'sim' && c.prospeccao === 'com_visita').length;
         const kpiReativ = clientesU.filter(c => c.parado === 'sim' && c.fechou === 'sim').length;
-        const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.fechou === 'sim').length;
+        const kpiOutrasRegioes = clientesU.filter(c => c.regiao && c.regiao.trim() !== '' && c.regiao.trim().toLowerCase() !== 'camaçari' && c.regiao.trim().toLowerCase() !== 'camacari' && c.fechou === 'sim').length;
         
         const kpiCarteira = clientesU.filter(c => c.carteira === 'sim').length;
         const kpiFidel = clientesU.filter(c => c.carteira === 'sim' && c.comprou_recorrente === 'sim').length;
@@ -854,7 +894,7 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             <img src="${u.foto || 'https://via.placeholder.com/40'}" width="40" height="40" class="rounded-circle border border-2 border-warning me-3 shadow-sm" style="object-fit: cover;">
                             <div>
                                 <h5 class="modal-title fw-bold mb-0"><i class="fa-solid fa-trophy text-warning me-2"></i> Conquistas de ${u.nome}</h5>
-                                <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star text-dark me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span> Pontos</span>
+                                <span class="badge bg-warning text-dark mt-1"><i class="fa-solid fa-star text-dark me-1"></i> <span class="counter-animate" data-val="${u.pontuacao}">0</span> Pontos Totais</span>
                             </div>
                             <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal"></button>
                         </div>
@@ -1083,12 +1123,12 @@ module.exports = (usuario, clientes, metas, kpis, metaGlobal, alcancadoGlobal, u
                             '<div class="p-4 d-flex flex-column align-items-center justify-content-center w-100 h-100">' +
                                 '<div class="row w-100 align-items-center justify-content-center m-0" style="max-width: 95%;">' +
                                     
-                                    '<!-- Lado Esquerdo: Imagem -->' +
+                                    '' +
                                     '<div class="col-12 col-lg-7 text-center mb-4 mb-lg-0 px-2">' +
                                         '<img src="' + s.imagem_url + '" class="img-fluid rounded shadow-sm border border-secondary-subtle" style="max-height: 55vh; object-fit: contain;">' +
                                     '</div>' +
                                     
-                                    '<!-- Lado Direito: Texto -->' +
+                                    '' +
                                     '<div class="col-12 col-lg-5 px-3">' +
                                         '<div class="bg-dark p-4 rounded border border-secondary-subtle custom-scrollbar" style="max-height: 55vh; overflow-y: auto; text-align: left; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);">' +
                                             '<h6 class="text-primary fw-bold mb-3 border-bottom border-secondary pb-2"><i class="fa-solid fa-circle-info me-2"></i>Instruções</h6>' +
