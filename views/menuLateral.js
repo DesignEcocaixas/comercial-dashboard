@@ -70,15 +70,14 @@ module.exports = (usuario) => {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
         }
 
-        /* SIDEBAR */
+        /* SIDEBAR - SEM EFEITO GLASS */
         .sidebar {
             position: fixed;
             top: 0;
             left: 0;
             width: var(--sidebar-width);
             height: 100vh;
-            background-color: rgba(15, 15, 15, 0.85) !important;
-            backdrop-filter: blur(12px);
+            background-color: #0f0f0f !important;
             color: #e5e5e5;
             z-index: 1050;
             display: flex;
@@ -104,10 +103,10 @@ module.exports = (usuario) => {
             margin-left: var(--sidebar-width); width: calc(100% - var(--sidebar-width)); min-height: 100vh; transition: margin-left 0.3s ease, width 0.3s ease;
         }
 
-        /* BARRA SUPERIOR MOBILE */
+        /* BARRA SUPERIOR MOBILE - SEM EFEITO GLASS */
         .mobile-topbar {
             display: none; position: fixed; top: 0; left: 0; width: 100%; height: 60px;
-            background-color: rgba(20, 20, 20, 0.9); backdrop-filter: blur(10px);
+            background-color: #141414;
             box-shadow: 0 2px 10px rgba(0,0,0,0.5); z-index: 1040; align-items: center; padding: 0 15px; justify-content: space-between;
             border-bottom: 1px solid rgba(255,255,255,0.05);
         }
@@ -126,9 +125,9 @@ module.exports = (usuario) => {
         /* ========================================================= */
         /* SOBREPOSIÇÃO DE CLASSES (WHITELABEL -> DARK)              */
         /* ========================================================= */
+        /* CARDS OTIMIZADOS - SEM EFEITO GLASS */
         .card {
-            background-color: rgba(25, 25, 25, 0.5) !important;
-            backdrop-filter: blur(12px);
+            background-color: #1a1a1a !important;
             border: 1px solid rgba(255,255,255,0.08) !important;
             color: #e5e5e5 !important;
         }
